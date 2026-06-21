@@ -1,6 +1,7 @@
 import { fields, stages, extraFields } from "./constants.js";
 import { renderPlanHtml, bindMaintenanceEvents } from "./maintenance.js";
 import { loadReminders } from "./reminders.js";
+import { initImport } from "./import.js";
 
 const createForm = document.querySelector('#createForm');
 const actionForm = document.querySelector('#actionForm');
@@ -107,4 +108,5 @@ document.querySelector('#search').oninput = render;
 document.querySelector('#reload').onclick = load;
 
 renderForms();
+initImport(api, load);
 load();

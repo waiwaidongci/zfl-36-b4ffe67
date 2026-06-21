@@ -26,6 +26,64 @@ export function renderPage() {
     <section>
       <form id="createForm"><h2>新增道具</h2><div id="fields"></div><label>初始状态</label><select name="status">${stageOptions}</select><button>保存道具</button></form>
       <form id="actionForm" style="margin-top:14px"><h2>创建演示借用单</h2><label>选择道具</label><select name="id" id="itemSelect"></select><div id="extraFields"></div><button>提交记录</button></form>
+      <div class="panel" id="importPanel" style="margin-top:14px">
+        <h2>批量导入道具</h2>
+        <details id="importHelp" class="import-help">
+          <summary>使用说明</summary>
+          <div class="help-content">
+            <p><strong>CSV 格式要求：</strong></p>
+            <ul>
+              <li>第一行必须是表头：编号,名称,用途,材质,存放点</li>
+              <li>编号仅允许字母、数字、连字符(-)和下划线(_)</li>
+              <li>所有字段均为必填</li>
+              <li>字段中包含逗号时请用双引号包裹，例如："渔网,三层"</li>
+            </ul>
+            <p><strong>示例：</strong></p>
+<pre>编号,名称,用途,材质,存放点
+CP-100,鸬鹚脚环,标识识别,铝合金,工具盒A
+CP-101,木桨,划船演示,老杉木,器具架B
+</pre>
+            <p><strong>操作步骤：</strong></p>
+            <ol>
+              <li>粘贴 CSV 文本到下方文本框，或点击"上传CSV文件"</li>
+              <li>点击"预览解析结果"</li>
+              <li>检查预览数据和错误行</li>
+              <li>确认无误后点击"确认导入"</li>
+            </ol>
+          </div>
+        </details>
+        <label>粘贴 CSV 文本</label>
+        <textarea id="csvInput" placeholder="编号,名称,用途,材质,存放点&#10;CP-100,鸬鹚脚环,标识识别,铝合金,工具盒A"></textarea>
+        <div class="import-toolbar">
+          <button type="button" id="previewBtn">预览解析结果</button>
+          <label class="file-btn">
+            <input type="file" id="fileInput" accept=".csv,text/csv" style="display:none">
+            上传CSV文件
+          </label>
+          <button type="button" id="clearBtn" class="secondary">清空</button>
+        </div>
+        <div id="previewResult" style="display:none;margin-top:12px">
+          <div class="preview-summary"></div>
+          <h3>解析成功（<span class="valid-count">0</span>条）</h3>
+          <div class="preview-table-wrap">
+            <table class="preview-table">
+              <thead><tr><th>编号</th><th>名称</th><th>用途</th><th>材质</th><th>存放点</th></tr></thead>
+              <tbody class="preview-tbody"></tbody>
+            </table>
+          </div>
+          <div id="errorSection" style="display:none">
+            <h3 class="warn">错误行（<span class="error-count">0</span>条）</h3>
+            <ul class="error-list"></ul>
+          </div>
+          <div id="duplicateSection" style="display:none">
+            <h3 class="warn">重复编号（<span class="dup-count">0</span>条）</h3>
+            <ul class="dup-list"></ul>
+          </div>
+          <div class="commit-bar">
+            <button type="button" id="commitBtn" disabled>确认导入</button>
+          </div>
+        </div>
+      </div>
     </section>
     <section>
       <div class="stats" id="stats"></div>

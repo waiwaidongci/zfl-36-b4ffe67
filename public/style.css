@@ -45,6 +45,33 @@ button.secondary { background:#69736a; }
 
 .complete-btn { background:var(--accent); font-size:12px; padding:5px 10px; margin-top:4px; }
 
+.import-help { margin-bottom:12px; }
+.import-help summary { cursor:pointer; padding:6px 0; color:var(--info); font-weight:700; }
+.import-help .help-content { padding:10px 0; border-top:1px solid var(--line); font-size:13px; color:var(--muted); }
+.import-help .help-content p { margin:8px 0 4px; color:var(--ink); }
+.import-help .help-content ul,.import-help .help-content ol { padding-left:20px; margin:4px 0; }
+.import-help .help-content li { margin:3px 0; }
+.import-help .help-content pre { background:#f6f8f4; border:1px solid var(--line); border-radius:6px; padding:10px; margin:6px 0; font-size:12px; overflow-x:auto; }
+
+.import-toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; }
+.import-toolbar .file-btn { display:inline-flex; align-items:center; border:0; border-radius:6px; background:#69736a; color:#fff; padding:10px 13px; font-weight:700; cursor:pointer; }
+
+.preview-summary-box { background:#f6f8f4; border:1px solid var(--line); border-radius:6px; padding:10px 12px; margin-bottom:10px; }
+.preview-summary-box strong { font-size:18px; }
+
+.preview-table-wrap { max-height:300px; overflow:auto; border:1px solid var(--line); border-radius:6px; margin-bottom:10px; }
+.preview-table { width:100%; border-collapse:collapse; font-size:13px; }
+.preview-table th,.preview-table td { padding:8px 10px; text-align:left; border-bottom:1px solid var(--line); }
+.preview-table th { background:#f6f8f4; position:sticky; top:0; font-weight:700; }
+.preview-table tbody tr:hover { background:#fafbf9; }
+
+.error-list,.dup-list { padding-left:20px; margin:6px 0 12px; }
+.error-list li,.dup-list li { padding:4px 0; font-size:13px; }
+
+.commit-bar { padding-top:10px; border-top:1px solid var(--line); }
+.commit-bar button { width:100%; }
+.commit-bar button:disabled { opacity:0.5; cursor:not-allowed; }
+
 @media (max-width:900px){
   header{display:block;padding:18px 16px;}
   main{grid-template-columns:1fr;padding:16px;}

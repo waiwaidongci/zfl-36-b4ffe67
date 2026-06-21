@@ -2,6 +2,7 @@ import http from "node:http";
 import { html, send } from "./db.js";
 import { handleItems } from "./routes/items.js";
 import { handleMaintenance } from "./routes/maintenance.js";
+import { handleImport } from "./routes/import.js";
 import { renderPage, serveStatic } from "./public/page.js";
 
 const port = Number(process.env.PORT || 3036);
@@ -21,6 +22,9 @@ const server = http.createServer(async (req, res) => {
 
     const maintResult = await handleMaintenance(req, res, url);
     if (maintResult !== null) return;
+
+    const importResult = await handleImport(req, res, url);
+    if (importResult !== null) return;
 
     send(res, 404, { error: "not_found" });
   } catch (error) {
