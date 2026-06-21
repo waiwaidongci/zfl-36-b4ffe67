@@ -87,5 +87,60 @@ export async function handleMaintenance(req, res, url) {
     return send(res, 200, { overdue, upcoming });
   }
 
+  if (req.method === "GET" && url.pathname === "/api/maintenance/calendar") {
+    const year = parseInt(url.searchParams.get("year")) || new Date().getFullYear();
+    const month = parseInt(url.searchParams.get("month")) || (new Date().getMonth() + 1);
+
+    const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
+    const nextMonth = month === 12 ? 1 : month + 1;
+    const nextYear = month === 12 ? year + 1 : year;
+    const monthEnd = `${nextYear}-${String(nextMonth).padStart(2, "0")}-01`;
+
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+
+    const items = [];
+    for (const item of db.items) {
+      const plan = item.maintenancePlan;
+      if (!plan || !plan.nextDate) continue;
+      const d = plan.nextDate;
+      if (d >= monthStart && d < monthEnd) {
+        let status = "normal";
+        let daysDiff = Math.floor((new Date(d) - now) / (24 * 60 * 60 * 1000));
+        if (d < today) {
+          status = "overdue";
+          daysDiff = -Math.floor((now - new Date(d)) / (24 * 60 * 60 * 1000));
+        } else if (d === today) {
+          status = "today";
+          daysDiff = 0;
+        } else if (daysDiff <= 7) {
+          status = "soon";
+        }
+
+        items.push({
+          id: item.id || item.code,
+          code: item.code,
+          name: item.name,
+          nextDate: d,
+          type: plan.type || "",
+          responsible: plan.responsible || "",
+          itemStatus: item.status,
+          status,
+          daysDiff
+        });
+      }
+    }
+
+    items.sort((a, b) => a.nextDate.localeCompare(b.nextDate));
+
+    const byDate = {};
+    for (const it of items) {
+      if (!byDate[it.nextDate]) byDate[it.nextDate] = [];
+      byDate[it.nextDate].push(it);
+    }
+
+    return send(res, 200, { year, month, items, byDate });
+  }
+
   return null;
 }

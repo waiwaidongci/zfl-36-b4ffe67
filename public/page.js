@@ -22,7 +22,7 @@ export function renderPage() {
   <link rel="stylesheet" href="/public/qrcode-label.css">
 </head>
 <body>
-  <header><div><h1>鸬鹚捕鱼道具维护</h1><div class="meta">道具建档、演示借用、归还和维护闭环</div></div><div class="header-actions"><div id="userStatusBar"></div><a href="/reports" class="nav-btn">📊 运营报表</a><a href="/batches" class="nav-btn" data-perm="create_batch">📦 借用批次</a><a href="/backup" class="nav-btn" data-perm="view_backups">💾 数据备份</a><a href="/users" class="nav-btn" data-perm="manage_users">👥 用户管理</a><button id="reload">刷新</button></div></header>
+  <header><div><h1>鸬鹚捕鱼道具维护</h1><div class="meta">道具建档、演示借用、归还和维护闭环</div></div><div class="header-actions"><div id="userStatusBar"></div><a href="/maintenance-calendar" class="nav-btn">📅 维护日历</a><a href="/reports" class="nav-btn">📊 运营报表</a><a href="/batches" class="nav-btn" data-perm="create_batch">📦 借用批次</a><a href="/backup" class="nav-btn" data-perm="view_backups">💾 数据备份</a><a href="/users" class="nav-btn" data-perm="manage_users">👥 用户管理</a><button id="reload">刷新</button></div></header>
   <main>
     <section>
       <form id="createForm"><h2>新增道具</h2><div id="fields"></div><label>初始状态</label><select name="status">${stageOptions}</select><button data-perm="create_item">保存道具</button></form>
@@ -652,6 +652,94 @@ export function renderBackupPage() {
   </div>
 
   <script type="module" src="/public/backup.js"></script>
+</body>
+</html>`;
+}
+
+export function renderMaintenanceCalendarPage() {
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>维护日历 - 鸬鹚捕鱼道具维护</title>
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>📅 维护日历</h1>
+      <div class="meta">按月查看所有道具维护计划安排</div>
+    </div>
+    <div class="header-actions">
+      <div id="userStatusBar"></div>
+      <a href="/" class="nav-btn">🏠 返回首页</a>
+      <button id="reloadBtn">刷新</button>
+    </div>
+  </header>
+  <main>
+    <section class="full-width">
+      <div class="panel">
+        <div class="calendar-toolbar">
+          <div class="calendar-nav">
+            <button id="prevMonthBtn" class="secondary small">◀ 上月</button>
+            <h2 id="monthTitle" style="margin:0 16px;min-width:160px;text-align:center">加载中...</h2>
+            <button id="nextMonthBtn" class="secondary small">下月 ▶</button>
+            <button id="todayBtn" class="small" style="margin-left:8px">今天</button>
+          </div>
+          <div class="calendar-legend">
+            <span class="legend-item"><span class="legend-dot overdue"></span>已逾期</span>
+            <span class="legend-item"><span class="legend-dot today"></span>今天</span>
+            <span class="legend-item"><span class="legend-dot soon"></span>7天内</span>
+            <span class="legend-item"><span class="legend-dot normal"></span>计划中</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <div class="calendar-toolbar" style="margin-bottom:14px">
+          <div class="calendar-summary" id="calendarSummary">
+            <span class="summary-pill overdue">逾期：<strong id="overdueCount">0</strong></span>
+            <span class="summary-pill today">今天：<strong id="todayCount">0</strong></span>
+            <span class="summary-pill soon">7天内：<strong id="soonCount">0</strong></span>
+            <span class="summary-pill normal">本月总计：<strong id="totalCount">0</strong></span>
+          </div>
+          <div>
+            <select id="responsibleFilter" style="min-width:180px">
+              <option value="">全部负责人</option>
+            </select>
+          </div>
+        </div>
+        <div id="calendarGrid" class="calendar-grid">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <div class="toolbar">
+          <h2 style="margin:0">📋 本月维护清单</h2>
+          <input id="listSearch" placeholder="搜索编号、名称或负责人">
+        </div>
+        <div id="maintenanceList" style="margin-top:12px">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="planModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="planModalTitle">维护计划</h3>
+        <span class="modal-close" id="planModalClose">&times;</span>
+      </div>
+      <div class="modal-body" id="planModalBody">
+        <div class="loading">加载中...</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/public/maintenance-calendar.js"></script>
 </body>
 </html>`;
 }

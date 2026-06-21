@@ -11,7 +11,7 @@ import { handleBatches } from "./routes/batches.js";
 import { handleReports } from "./routes/reports.js";
 import { handleAuth } from "./routes/auth.js";
 import { handleBackup } from "./routes/backup.js";
-import { renderPage, renderQrcodeDetailPage, renderBatchesPage, renderBatchDetailPage, renderReportsPage, renderLoginPage, renderUsersPage, renderBackupPage, serveStatic } from "./public/page.js";
+import { renderPage, renderQrcodeDetailPage, renderBatchesPage, renderBatchDetailPage, renderReportsPage, renderLoginPage, renderUsersPage, renderBackupPage, renderMaintenanceCalendarPage, serveStatic } from "./public/page.js";
 
 const port = Number(process.env.PORT || 3036);
 
@@ -90,6 +90,11 @@ const server = http.createServer(async (req, res) => {
     const backupMatch = url.pathname.match(/^\/backup$/);
     if (backupMatch && req.method === "GET") {
       return html(res, renderBackupPage());
+    }
+
+    const calendarMatch = url.pathname.match(/^\/maintenance-calendar$/);
+    if (calendarMatch && req.method === "GET") {
+      return html(res, renderMaintenanceCalendarPage());
     }
 
     send(res, 404, { error: "not_found" });
