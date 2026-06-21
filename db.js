@@ -1,14 +1,50 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { seed, defaultUsers } from "./data/seed.js";
 import { hashPassword, cleanExpiredSessions } from "./services/auth.js";
+import {
+  writeDatabase,
+  createBackup,
+  listBackups,
+  readBackup,
+  validateBackupData,
+  validateDatabaseObject,
+  restoreFromBackupData,
+  cleanupOldBackups,
+  ensureDirs,
+  resolveDbPaths,
+  tryParseJson,
+  BACKUP_PREFIX
+} from "./services/storage.js";
+import {
+  loadAndMigrate,
+  getMigrationStatus,
+  ROOT_DIR,
+  TARGET_SCHEMA_VERSION
+} from "./migrations/index.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dbPath = join(__dirname, "data", "cormorant-props.json");
 
-export function migrateDb(db) {
+export { dbPath };
+export {
+  createBackup,
+  listBackups,
+  readBackup,
+  validateBackupData,
+  validateDatabaseObject,
+  restoreFromBackupData,
+  cleanupOldBackups,
+  getMigrationStatus,
+  ensureDirs,
+  resolveDbPaths,
+  TARGET_SCHEMA_VERSION,
+  ROOT_DIR,
+  BACKUP_PREFIX,
+  tryParseJson
+};
+
+export function legacyMigrateDb(db) {
   let changed = false;
   if (!Array.isArray(db.borrowBatches)) {
     db.borrowBatches = [];
@@ -46,31 +82,104 @@ export function migrateDb(db) {
   return changed;
 }
 
-export async function loadDb() {
-  if (!existsSync(dbPath)) {
-    await mkdir(dirname(dbPath), { recursive: true });
-    await writeFile(dbPath, JSON.stringify(seed, null, 2));
+let cachedDb = null;
+let cacheTime = 0;
+const CACHE_TTL_MS = 500;
+let lastLoadInfo = null;
+
+function cacheGet() {
+  if (cachedDb && Date.now() - cacheTime < CACHE_TTL_MS) {
+    return cachedDb;
   }
-  const db = JSON.parse(await readFile(dbPath, "utf8"));
-  if (migrateDb(db)) {
-    await saveDb(db);
-  }
-  return db;
+  return null;
 }
 
-export async function saveDb(db) {
-  await writeFile(dbPath, JSON.stringify(db, null, 2));
+function cacheSet(db) {
+  cachedDb = db;
+  cacheTime = Date.now();
+}
+
+function cacheInvalidate() {
+  cachedDb = null;
+  cacheTime = 0;
+}
+
+export async function loadDb(options = {}) {
+  const { force = false } = options;
+  if (!force) {
+    const cached = cacheGet();
+    if (cached) return cached;
+  }
+  const result = await loadAndMigrate();
+  lastLoadInfo = {
+    loadedAt: new Date().toISOString(),
+    fresh: result.fresh,
+    beforeVersion: result.beforeVersion,
+    finalVersion: result.finalVersion,
+    recovery: result.recovery,
+    backupCreated: result.backupCreated,
+    warnings: result.warnings,
+    validation: result.validation
+  };
+  cacheSet(result.db);
+  return result.db;
+}
+
+export function getLastLoadInfo() {
+  return lastLoadInfo;
+}
+
+export async function saveDb(db, options = {}) {
+  const { createSnapshot = false, tag = "" } = options;
+  if (typeof db.schemaVersion !== "number") {
+    db.schemaVersion = TARGET_SCHEMA_VERSION;
+  }
+  const result = await writeDatabase(ROOT_DIR, db);
+  cacheSet(db);
+  if (createSnapshot) {
+    try {
+      await createBackup(ROOT_DIR, tag || "snapshot");
+    } catch {
+      // ignore backup failure
+    }
+  }
+  return result;
 }
 
 export async function body(req) {
   const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
-  return chunks.length ? JSON.parse(Buffer.concat(chunks).toString("utf8")) : {};
+  const buf = Buffer.concat(chunks);
+  if (buf.length === 0) return {};
+  const text = buf.toString("utf8");
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    const error = new Error("请求体 JSON 解析失败: " + err.message);
+    error.statusCode = 400;
+    error.code = "INVALID_JSON";
+    throw error;
+  }
+}
+
+export async function bodyRaw(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  return Buffer.concat(chunks).toString("utf8");
 }
 
 export function send(res, status, data) {
   res.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
   res.end(JSON.stringify(data, null, 2));
+}
+
+export function sendFile(res, status, content, filename, contentType = "application/json") {
+  res.writeHead(status, {
+    "Content-Type": `${contentType}; charset=utf-8`,
+    "Content-Disposition": `attachment; filename="${encodeURIComponent(filename)}"`,
+    "Content-Length": Buffer.byteLength(content, "utf8")
+  });
+  res.end(content);
 }
 
 export function html(res, text) {

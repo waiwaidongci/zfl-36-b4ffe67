@@ -1,4 +1,12 @@
 {
+  "backupMeta": {
+    "createdAt": "2026-06-21T09:38:48.466Z",
+    "tag": "pre-migration-v0",
+    "schemaVersion": 0,
+    "originalChecksum": "78edf772e7275fa3254a7ea581825ccda79f8354a02cab0408c8083da4bf1245",
+    "originalBytes": 24773,
+    "cleanedAt": "2026-06-21T10:23:46.753190Z"
+  },
   "items": [
     {
       "code": "CP-001",
@@ -120,9 +128,7 @@
           "step": "归还",
           "note": "归还人：赵演员 · 归还日期：2026-06-18"
         }
-      ],
-      "id": "CP-001",
-      "tasks": []
+      ]
     },
     {
       "code": "CP-002",
@@ -220,9 +226,7 @@
           "step": "归还",
           "note": "归还人：李展示 · 归还日期：2026-06-12 · 磨损变化：底圈松动加重 · 检查结果：需修补"
         }
-      ],
-      "id": "CP-002",
-      "tasks": []
+      ]
     },
     {
       "code": "CP-003",
@@ -308,9 +312,7 @@
           "step": "借用",
           "note": "民俗馆开馆仪式 · 赵演员"
         }
-      ],
-      "id": "CP-003",
-      "tasks": []
+      ]
     },
     {
       "code": "CP-004",
@@ -396,9 +398,7 @@
           "step": "借用",
           "note": "水乡风情展演 · 钱船员"
         }
-      ],
-      "id": "CP-004",
-      "tasks": []
+      ]
     },
     {
       "code": "CP-005",
@@ -448,9 +448,7 @@
           "step": "归还",
           "note": "归还人：冯研究员 · 归还日期：2026-06-01"
         }
-      ],
-      "id": "CP-005",
-      "tasks": []
+      ]
     },
     {
       "code": "CP-006",
@@ -548,9 +546,7 @@
           "step": "归还",
           "note": "归还人：卫演示 · 归还日期：2026-06-16"
         }
-      ],
-      "id": "CP-006",
-      "tasks": []
+      ]
     },
     {
       "code": "CP-007",
@@ -600,9 +596,7 @@
           "step": "维护",
           "note": "上蜡保养"
         }
-      ],
-      "id": "CP-007",
-      "tasks": []
+      ]
     },
     {
       "code": "CP-008",
@@ -664,9 +658,7 @@
           "step": "借用",
           "note": "古镇旅游节 · 杨演示"
         }
-      ],
-      "id": "CP-008",
-      "tasks": []
+      ]
     },
     {
       "code": "CP-009",
@@ -740,9 +732,7 @@
           "step": "归还",
           "note": "归还人：秦展示 · 归还日期：2026-06-06"
         }
-      ],
-      "id": "CP-009",
-      "tasks": []
+      ]
     },
     {
       "code": "CP-010",
@@ -816,9 +806,7 @@
           "step": "归还",
           "note": "归还人：许演示 · 归还日期：2026-06-12"
         }
-      ],
-      "id": "CP-010",
-      "tasks": []
+      ]
     }
   ],
   "inventories": [
@@ -1007,8 +995,7 @@
       "displayName": "系统管理员",
       "role": "admin",
       "createdAt": "2026-01-01T00:00:00.000Z",
-      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
-      "lastLoginAt": "2026-06-21T10:22:53.815Z"
+      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"
     },
     {
       "id": "USER-DEFAULT-MAINTAINER",
@@ -1027,14 +1014,5 @@
       "passwordHash": "656d604dfdba41a262963cce53699bbc56cd7a2c0da1ad5ead45fc49214159d6"
     }
   ],
-  "sessions": [],
-  "_migrations": [
-    {
-      "version": 1,
-      "appliedAt": "2026-06-21T09:38:48.468Z",
-      "fromVersion": 0,
-      "warnings": []
-    }
-  ],
-  "schemaVersion": 1
+  "sessions": []
 }

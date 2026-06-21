@@ -29,7 +29,10 @@ const PERMISSIONS = {
   CREATE_BATCH: "create_batch",
   UPDATE_BATCH: "update_batch",
   ADD_BATCH_LOG: "add_batch_log",
-  MANAGE_USERS: "manage_users"
+  MANAGE_USERS: "manage_users",
+  DOWNLOAD_BACKUP: "download_backup",
+  RESTORE_BACKUP: "restore_backup",
+  VIEW_BACKUPS: "view_backups"
 };
 
 const ROLE_PERMISSIONS = {
@@ -42,9 +45,13 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.CREATE_REPAIR_ORDER,
     PERMISSIONS.UPDATE_REPAIR_ORDER,
     PERMISSIONS.COMPLETE_REPAIR_ORDER,
-    PERMISSIONS.ADD_BATCH_LOG
+    PERMISSIONS.ADD_BATCH_LOG,
+    PERMISSIONS.VIEW_BACKUPS,
+    PERMISSIONS.DOWNLOAD_BACKUP
   ],
-  [ROLES.VIEWER]: []
+  [ROLES.VIEWER]: [
+    PERMISSIONS.VIEW_BACKUPS
+  ]
 };
 
 let currentUser = null;
@@ -170,7 +177,10 @@ export function applyPermissionGuards() {
     '[data-perm="create_batch"]': PERMISSIONS.CREATE_BATCH,
     '[data-perm="update_batch"]': PERMISSIONS.UPDATE_BATCH,
     '[data-perm="add_batch_log"]': PERMISSIONS.ADD_BATCH_LOG,
-    '[data-perm="manage_users"]': PERMISSIONS.MANAGE_USERS
+    '[data-perm="manage_users"]': PERMISSIONS.MANAGE_USERS,
+    '[data-perm="download_backup"]': PERMISSIONS.DOWNLOAD_BACKUP,
+    '[data-perm="restore_backup"]': PERMISSIONS.RESTORE_BACKUP,
+    '[data-perm="view_backups"]': PERMISSIONS.VIEW_BACKUPS
   };
   for (const [selector, perm] of Object.entries(guards)) {
     document.querySelectorAll(selector).forEach(el => {
@@ -183,6 +193,33 @@ export function applyPermissionGuards() {
     if (!isLoggedIn()) {
       el.style.display = "none";
     }
+  });
+}
+
+export function extractToken() {
+  const match = document.cookie.match(/(?:^|;\s*)auth_token=([^;]+)/);
+  if (match) return decodeURIComponent(match[1]);
+  return null;
+}
+
+export function serializeUser(user) {
+  if (!user) return null;
+  return {
+    id: user.id,
+    username: user.username,
+    displayName: user.displayName,
+    role: user.role,
+    roleLabel: user.roleLabel || ROLE_LABELS[user.role]
+  };
+}
+
+export function setupUserBar(containerId) {
+  const container = typeof containerId === "string" ? document.getElementById(containerId) : containerId;
+  if (!container) return Promise.resolve(null);
+  return initAuth().then(() => {
+    renderLoginStatusBar(container);
+    applyPermissionGuards();
+    return getCurrentUser();
   });
 }
 

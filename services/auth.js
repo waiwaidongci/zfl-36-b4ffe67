@@ -88,7 +88,10 @@ export const PERMISSIONS = {
   CREATE_BATCH: "create_batch",
   UPDATE_BATCH: "update_batch",
   ADD_BATCH_LOG: "add_batch_log",
-  MANAGE_USERS: "manage_users"
+  MANAGE_USERS: "manage_users",
+  DOWNLOAD_BACKUP: "download_backup",
+  RESTORE_BACKUP: "restore_backup",
+  VIEW_BACKUPS: "view_backups"
 };
 
 const ROLE_PERMISSIONS = {
@@ -101,9 +104,13 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.CREATE_REPAIR_ORDER,
     PERMISSIONS.UPDATE_REPAIR_ORDER,
     PERMISSIONS.COMPLETE_REPAIR_ORDER,
-    PERMISSIONS.ADD_BATCH_LOG
+    PERMISSIONS.ADD_BATCH_LOG,
+    PERMISSIONS.VIEW_BACKUPS,
+    PERMISSIONS.DOWNLOAD_BACKUP
   ],
-  [ROLES.VIEWER]: []
+  [ROLES.VIEWER]: [
+    PERMISSIONS.VIEW_BACKUPS
+  ]
 };
 
 export function hasPermission(role, permission) {

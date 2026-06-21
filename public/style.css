@@ -909,3 +909,79 @@ button.info {
   margin-top: 6px;
 }
 
+.loading {
+  padding: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.upload-area {
+  border: 2px dashed var(--line);
+  border-radius: 10px;
+  padding: 30px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: #fafbf9;
+}
+.upload-area:hover {
+  border-color: var(--accent);
+  background: #f0f7ec;
+}
+.upload-hint {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.modal[style*="display:flex"],
+.modal[style*="display: flex"] {
+  display: flex !important;
+}
+.modal-content {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+
+.preview-summary-box {
+  background: #f6f8f4;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.preview-summary-box strong {
+  font-size: 16px;
+}
+
+code {
+  background: #f0f2ee;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: "SF Mono", Consolas, monospace;
+  font-size: 12px;
+}
+
+.small {
+  padding: 5px 10px !important;
+  font-size: 12px !important;
+}
+button.small {
+  padding: 5px 10px !important;
+  font-size: 12px !important;
+}
+

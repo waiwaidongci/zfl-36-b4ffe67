@@ -1,4 +1,12 @@
 {
+  "backupMeta": {
+    "createdAt": "2026-06-21T10:23:06.671Z",
+    "tag": "pre-restore",
+    "schemaVersion": 1,
+    "originalChecksum": "219a6a43cd1084a5fbdf332039cd63b4bef0e69125a7e63512b48cba8d7aa667",
+    "originalBytes": 25630,
+    "cleanedAt": "2026-06-21T10:23:46.756713Z"
+  },
   "items": [
     {
       "code": "CP-001",

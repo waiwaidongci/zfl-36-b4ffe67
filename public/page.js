@@ -22,7 +22,7 @@ export function renderPage() {
   <link rel="stylesheet" href="/public/qrcode-label.css">
 </head>
 <body>
-  <header><div><h1>鸬鹚捕鱼道具维护</h1><div class="meta">道具建档、演示借用、归还和维护闭环</div></div><div class="header-actions"><div id="userStatusBar"></div><a href="/reports" class="nav-btn">📊 运营报表</a><a href="/batches" class="nav-btn" data-perm="create_batch">📦 借用批次</a><button id="reload">刷新</button></div></header>
+  <header><div><h1>鸬鹚捕鱼道具维护</h1><div class="meta">道具建档、演示借用、归还和维护闭环</div></div><div class="header-actions"><div id="userStatusBar"></div><a href="/reports" class="nav-btn">📊 运营报表</a><a href="/batches" class="nav-btn" data-perm="create_batch">📦 借用批次</a><a href="/backup" class="nav-btn" data-perm="view_backups">💾 数据备份</a><a href="/users" class="nav-btn" data-perm="manage_users">👥 用户管理</a><button id="reload">刷新</button></div></header>
   <main>
     <section>
       <form id="createForm"><h2>新增道具</h2><div id="fields"></div><label>初始状态</label><select name="status">${stageOptions}</select><button data-perm="create_item">保存道具</button></form>
@@ -497,6 +497,145 @@ export function renderUsersPage() {
     </div>
   </div>
   <script type="module" src="/public/users.js"></script>
+</body>
+</html>`;
+}
+
+export function renderBackupPage() {
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>数据备份与恢复 - 鸬鹚捕鱼道具维护</title>
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>💾 数据备份与恢复</h1>
+      <div class="meta">版本迁移 · 备份下载 · 安全恢复</div>
+    </div>
+    <div class="header-actions">
+      <div id="userStatusBar"></div>
+      <a href="/" class="nav-btn">🏠 返回首页</a>
+      <button id="refreshBtn">刷新状态</button>
+    </div>
+  </header>
+  <main>
+    <section class="full-width">
+      <div class="panel">
+        <div class="toolbar">
+          <h2 style="margin:0">📋 当前状态</h2>
+          <span id="schemaBadge" class="pill">加载中...</span>
+        </div>
+        <div id="statusPanel" style="margin-top:12px">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <div class="toolbar">
+          <h2 style="margin:0">⬇️ 下载备份</h2>
+          <div>
+            <button id="downloadBtn" class="" data-perm="download_backup">下载当前数据备份</button>
+            <button id="createBackupBtn" class="secondary" data-perm="download_backup" style="margin-left:8px">创建服务器备份</button>
+          </div>
+        </div>
+        <div class="meta" style="margin-top:10px">下载 JSON 格式完整备份文件，可用于恢复或离线存档。每次下载会在服务器自动创建带时间戳的快照备份。</div>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <div class="toolbar">
+          <h2 style="margin:0">📂 历史备份列表</h2>
+          <div>
+            <button id="cleanupBtn" class="secondary" data-perm="restore_backup">清理旧备份(保留10份)</button>
+          </div>
+        </div>
+        <div id="backupList" style="margin-top:12px">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px;border-color:#b38a3a;border-width:2px">
+        <h2 style="color:#9b6a1f">⚠️ 恢复数据（危险操作）</h2>
+        <div class="meta" style="margin-bottom:14px">
+          <strong>恢复流程说明：</strong>选择备份文件 → <strong>上传预检</strong>（自动解析、校验结构、检测重复编号、预览迁移结果）→ <strong>确认恢复</strong>（先自动备份当前数据再恢复，失败不破坏现有数据）。
+        </div>
+
+        <div id="restoreSection">
+          <label>选择备份文件（JSON 格式）</label>
+          <div class="upload-area" id="dropZone">
+            <input type="file" id="fileInput" accept=".json,application/json" style="display:none">
+            <div class="upload-hint">
+              <div style="font-size:28px">📁</div>
+              <div>点击选择文件或拖拽 JSON 文件到此处</div>
+              <div class="meta" style="margin-top:6px">支持本系统导出的任意版本备份文件</div>
+            </div>
+            <div id="selectedFileInfo" style="display:none;margin-top:12px"></div>
+          </div>
+
+          <div id="precheckPanel" style="display:none;margin-top:16px">
+            <div class="preview-summary-box" id="precheckSummary"></div>
+
+            <div id="migrationPreview" style="display:none;margin-top:12px">
+              <h3>🔄 迁移预览</h3>
+              <div id="migrationInfo" class="meta"></div>
+              <ul id="migrationWarningsList" style="margin:8px 0;padding-left:20px"></ul>
+            </div>
+
+            <div id="duplicatePanel" style="display:none;margin-top:12px">
+              <h3 class="warn">🔢 重复编号检测</h3>
+              <ul id="duplicateList" class="dup-list"></ul>
+            </div>
+
+            <div id="validationPanel" style="margin-top:12px">
+              <h3>✅ 校验结果</h3>
+              <div id="validationInfo"></div>
+              <ul id="errorList" class="error-list" style="display:none"></ul>
+              <ul id="warningList" class="dup-list" style="display:none"></ul>
+            </div>
+
+            <div id="dangerFlagsPanel" style="display:none;margin-top:12px">
+              <h3>⚠️ 注意事项</h3>
+              <ul id="dangerFlagsList" style="margin:0;padding-left:20px"></ul>
+            </div>
+
+            <div class="commit-bar" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <label class="checkbox-label" style="margin:0">
+                  <input type="checkbox" id="confirmCheckbox">
+                  <span>我已理解：恢复将覆盖<strong>全部现有数据</strong>，操作前将自动创建当前数据备份</span>
+                </label>
+              </div>
+              <div style="margin-top:12px;display:flex;gap:10px">
+                <button id="restoreBtn" disabled data-perm="restore_backup" style="background:#9b4937">确认恢复数据</button>
+                <button type="button" id="resetBtn" class="secondary">取消 / 选择其他文件</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="restoreResult" style="display:none;margin-top:16px"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="confirmModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">确认操作</h3>
+        <span class="modal-close" id="modalClose">&times;</span>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="secondary" id="modalCancel">取消</button>
+        <button type="button" id="modalConfirm">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/public/backup.js"></script>
 </body>
 </html>`;
 }

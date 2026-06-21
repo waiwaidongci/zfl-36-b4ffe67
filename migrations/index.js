@@ -1,0 +1,157 @@
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  readDatabase,
+  writeDatabase,
+  createBackup,
+  validateDatabaseObject,
+  listBackups
+} from "../services/storage.js";
+import { seed } from "../data/seed.js";
+import { migrate_v0_to_v1, TARGET_SCHEMA_VERSION, ensureIntegrity } from "./v001_to_v1.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT_DIR = join(__dirname, "..");
+
+export { TARGET_SCHEMA_VERSION, ensureIntegrity };
+
+const MIGRATIONS = [
+  { from: 0, to: 1, run: migrate_v0_to_v1 }
+];
+
+export function getMigrations() {
+  return [...MIGRATIONS];
+}
+
+export function currentVersion(db) {
+  return db && typeof db.schemaVersion === "number" ? db.schemaVersion : 0;
+}
+
+export function needsMigration(db) {
+  return currentVersion(db) < TARGET_SCHEMA_VERSION;
+}
+
+export function applyMigrations(db) {
+  let allWarnings = [];
+  let allChanged = false;
+  const steps = [];
+
+  for (const mig of MIGRATIONS) {
+    const ver = currentVersion(db);
+    if (ver === mig.from && ver < mig.to) {
+      const result = mig.run(db);
+      if (result.warnings) allWarnings = allWarnings.concat(result.warnings);
+      if (result.changed) allChanged = true;
+      steps.push({ from: mig.from, to: mig.to, ...result });
+    }
+  }
+
+  return {
+    changed: allChanged,
+    warnings: allWarnings,
+    steps,
+    finalVersion: currentVersion(db)
+  };
+}
+
+export async function loadAndMigrate() {
+  const readResult = await readDatabase(ROOT_DIR);
+
+  if (readResult === null) {
+    const fresh = {
+      schemaVersion: TARGET_SCHEMA_VERSION,
+      _migrations: [{
+        version: TARGET_SCHEMA_VERSION,
+        appliedAt: new Date().toISOString(),
+        fromVersion: 0,
+        seed: true,
+        warnings: []
+      }],
+      ...seed,
+      users: undefined
+    };
+    const seeded = {
+      ...fresh,
+      users: undefined
+    };
+    migrate_v0_to_v1(seeded);
+    await writeDatabase(ROOT_DIR, seeded);
+    return {
+      fresh: true,
+      db: seeded,
+      steps: [],
+      warnings: [],
+      recovery: null,
+      backupCreated: null
+    };
+  }
+
+  const db = readResult.data;
+  const recovery = readResult.source === "backup"
+    ? { fromBackup: readResult.backupFile, error: readResult.recoverError }
+    : null;
+
+  const beforeVersion = currentVersion(db);
+
+  let backupCreated = null;
+  if (needsMigration(db) || recovery) {
+    try {
+      backupCreated = await createBackup(
+        ROOT_DIR,
+        recovery ? `pre-migration-recovered-from-${readResult.backupFile}` : `pre-migration-v${beforeVersion}`
+      );
+    } catch (backupErr) {
+      // backup failure shouldn't block migration
+    }
+  }
+
+  const result = applyMigrations(db);
+
+  if (recovery && !result.changed) {
+    result.changed = true;
+  }
+
+  const vres = validateDatabaseObject(db);
+  if (vres.errors.length > 0) {
+    result.warnings.push(`迁移后验证发现 ${vres.errors.length} 个错误: ${vres.errors.join("; ")}`);
+  }
+
+  if (result.changed) {
+    await writeDatabase(ROOT_DIR, db);
+  }
+
+  return {
+    fresh: false,
+    db,
+    steps: result.steps,
+    warnings: result.warnings,
+    finalVersion: result.finalVersion,
+    beforeVersion,
+    recovery,
+    backupCreated,
+    validation: vres
+  };
+}
+
+export async function getMigrationStatus() {
+  const readResult = await readDatabase(ROOT_DIR);
+  if (readResult === null) {
+    return { exists: false, needsInit: true, targetVersion: TARGET_SCHEMA_VERSION };
+  }
+  const db = readResult.data;
+  const ver = currentVersion(db);
+  const backups = await listBackups(ROOT_DIR);
+  return {
+    exists: true,
+    currentVersion: ver,
+    targetVersion: TARGET_SCHEMA_VERSION,
+    needsMigration: needsMigration(db),
+    migrations: db._migrations || [],
+    recovery: readResult.source === "backup" ? readResult.backupFile : null,
+    backupCount: backups.length,
+    latestBackup: backups[0] || null,
+    validation: validateDatabaseObject(db)
+  };
+}
+
+export { ROOT_DIR };

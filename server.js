@@ -1,5 +1,5 @@
 import http from "node:http";
-import { html, send } from "./db.js";
+import { html, send, loadDb } from "./db.js";
 import { handleItems } from "./routes/items.js";
 import { handleMaintenance } from "./routes/maintenance.js";
 import { handleImport } from "./routes/import.js";
@@ -10,7 +10,8 @@ import { handleQrcode } from "./routes/qrcode.js";
 import { handleBatches } from "./routes/batches.js";
 import { handleReports } from "./routes/reports.js";
 import { handleAuth } from "./routes/auth.js";
-import { renderPage, renderQrcodeDetailPage, renderBatchesPage, renderBatchDetailPage, renderReportsPage, renderLoginPage, renderUsersPage, serveStatic } from "./public/page.js";
+import { handleBackup } from "./routes/backup.js";
+import { renderPage, renderQrcodeDetailPage, renderBatchesPage, renderBatchDetailPage, renderReportsPage, renderLoginPage, renderUsersPage, renderBackupPage, serveStatic } from "./public/page.js";
 
 const port = Number(process.env.PORT || 3036);
 
@@ -58,6 +59,9 @@ const server = http.createServer(async (req, res) => {
     const reportsResult = await handleReports(req, res, url);
     if (reportsResult !== null) return;
 
+    const backupResult = await handleBackup(req, res, url);
+    if (backupResult !== null) return;
+
     const qrDetailMatch = url.pathname.match(/^\/qrcode\/([^/]+)$/);
     if (qrDetailMatch && req.method === "GET") {
       return html(res, renderQrcodeDetailPage(qrDetailMatch[1]));
@@ -83,10 +87,23 @@ const server = http.createServer(async (req, res) => {
       return html(res, renderUsersPage());
     }
 
+    const backupMatch = url.pathname.match(/^\/backup$/);
+    if (backupMatch && req.method === "GET") {
+      return html(res, renderBackupPage());
+    }
+
     send(res, 404, { error: "not_found" });
   } catch (error) {
     send(res, 500, { error: error.message });
   }
 });
 
-server.listen(port, () => console.log("鸬鹚捕鱼道具维护 listening on http://localhost:" + port));
+(async function startup() {
+  try {
+    const db = await loadDb();
+    console.log(`[启动] 数据加载成功，schemaVersion: ${db.schemaVersion || 0}`);
+  } catch (err) {
+    console.error("[启动] 数据加载/迁移失败:", err.message);
+  }
+  server.listen(port, () => console.log("鸬鹚捕鱼道具维护 listening on http://localhost:" + port));
+})();

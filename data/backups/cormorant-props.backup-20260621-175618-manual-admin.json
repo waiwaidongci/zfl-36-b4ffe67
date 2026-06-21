@@ -1,4 +1,12 @@
 {
+  "backupMeta": {
+    "createdAt": "2026-06-21T09:56:18.947Z",
+    "tag": "manual-admin",
+    "schemaVersion": 1,
+    "originalChecksum": "171035589b612295f3d05db79b4639cc91b5fbb16fd12dee780e8ce846480c9c",
+    "originalBytes": 25857,
+    "cleanedAt": "2026-06-21T10:23:46.754919Z"
+  },
   "items": [
     {
       "code": "CP-001",
@@ -1008,7 +1016,7 @@
       "role": "admin",
       "createdAt": "2026-01-01T00:00:00.000Z",
       "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
-      "lastLoginAt": "2026-06-21T10:22:53.815Z"
+      "lastLoginAt": "2026-06-21T09:54:49.901Z"
     },
     {
       "id": "USER-DEFAULT-MAINTAINER",
