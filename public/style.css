@@ -985,3 +985,160 @@ button.small {
   font-size: 12px !important;
 }
 
+.batch-return-modal {
+  max-width: 720px !important;
+}
+
+.batch-return-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.batch-return-section {
+  background: #f8f9f6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+
+.batch-return-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.batch-return-toolbar .secondary {
+  font-size: 12px;
+  padding: 5px 10px;
+}
+
+.batch-return-items {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.batch-return-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.batch-return-item:hover {
+  background: #f0f7ec;
+  border-color: var(--accent);
+}
+
+.batch-return-item:has(.return-item-checkbox:checked) {
+  background: #e8efe5;
+  border-color: var(--accent);
+}
+
+.batch-return-item input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.return-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.return-item-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.return-item-title strong {
+  font-size: 14px;
+}
+
+.toggle-detail-btn {
+  flex-shrink: 0;
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+.return-item-details {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  padding: 12px 16px;
+  margin-top: -4px;
+  margin-left: 28px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.detail-item {
+  min-width: 0;
+}
+
+.detail-item label {
+  margin: 0 0 4px;
+  font-size: 12px;
+}
+
+.detail-item input[type="text"] {
+  width: 100%;
+  padding: 7px 9px;
+  font-size: 13px;
+}
+
+.detail-item .checkbox-label {
+  margin: 8px 0 0;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-item {
+  min-width: 0;
+}
+
+.form-item label {
+  margin: 0 0 5px;
+}
+
+.form-item input {
+  width: 100%;
+}
+
+.batch-return-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 700px) {
+  .detail-grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .return-item-details { margin-left: 0; }
+  .batch-return-item { flex-wrap: wrap; }
+}
+

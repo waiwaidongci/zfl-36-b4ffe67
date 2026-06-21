@@ -254,7 +254,12 @@ export function renderBatchDetailPage(batchId) {
         </div>
       </div>
       <div class="panel" style="margin-top:14px">
-        <h2>未归还清单 <span class="pill warn" id="notReturnedCount" style="margin-left:8px">0</span></h2>
+        <div class="toolbar">
+          <h2 style="margin:0">未归还清单 <span class="pill warn" id="notReturnedCount" style="margin-left:8px">0</span></h2>
+          <div>
+            <button id="batchReturnBtn" class="secondary" data-perm="return_item" style="display:none">📦 批量归还</button>
+          </div>
+        </div>
         <div id="notReturnedList" style="margin-top:12px">
           <div class="loading">加载中...</div>
         </div>
@@ -276,6 +281,17 @@ export function renderBatchDetailPage(batchId) {
       </div>
     </section>
   </main>
+  <div id="batchReturnModal" class="modal" style="display:none">
+    <div class="modal-content batch-return-modal">
+      <div class="modal-header">
+        <h3>📦 批次归还</h3>
+        <span class="modal-close" id="batchReturnModalClose">&times;</span>
+      </div>
+      <div class="modal-body" id="batchReturnModalBody">
+        <div class="loading">加载中...</div>
+      </div>
+    </div>
+  </div>
   <script type="module" src="/public/batch-detail.js"></script>
 </body>
 </html>`;

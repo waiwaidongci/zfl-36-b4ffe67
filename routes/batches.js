@@ -1,4 +1,4 @@
-import { loadDb, saveDb, body, send, newBatchId } from "../db.js";
+import { loadDb, saveDb, body, send, newBatchId, newId } from "../db.js";
 import { requirePermission } from "./auth.js";
 import { PERMISSIONS } from "../services/auth.js";
 
@@ -162,6 +162,125 @@ export async function handleBatches(req, res, url) {
     batch.logs.push({ at: new Date().toISOString(), step: input.step || "备注", note: (input.note || "") + "（" + user.displayName + "）" });
     await saveDb(db);
     return send(res, 201, summarizeBatch(batch, db));
+  }
+
+  const batchReturn = url.pathname.match(/^\/api\/batches\/([^/]+)\/return$/);
+  if (batchReturn && req.method === "POST") {
+    const user = await requirePermission(req, res, PERMISSIONS.RETURN_ITEM);
+    if (!user) return;
+
+    const batch = findBatch(db, batchReturn[1]);
+    if (!batch) return send(res, 404, { error: "batch_not_found" });
+
+    const input = await body(req);
+    const returnDate = input.returnDate || new Date().toISOString().slice(0, 10);
+    const returner = input.returner || "";
+    const generalWear = input.generalWear || "";
+    const itemsInput = Array.isArray(input.items) ? input.items : [];
+
+    if (itemsInput.length === 0) {
+      return send(res, 400, { error: "no_items", message: "请至少选择一件道具" });
+    }
+
+    const validItems = [];
+    const invalidItems = [];
+    const unavailableItems = [];
+
+    for (const itemInput of itemsInput) {
+      const itemId = itemInput.itemId;
+      const item = findItem(db, itemId);
+
+      if (!item) {
+        invalidItems.push(itemId);
+        continue;
+      }
+
+      if (item.status !== "已借出" && item.status !== "待归还") {
+        unavailableItems.push({ id: item.id || item.code, name: item.name, code: item.code, status: item.status });
+        continue;
+      }
+
+      const lastBorrowing = (item.borrowings || []).filter(b => b.batchId === batch.id).slice(-1)[0];
+      if (!lastBorrowing) {
+        unavailableItems.push({ id: item.id || item.code, name: item.name, code: item.code, status: item.status, message: "该道具不属于此批次" });
+        continue;
+      }
+
+      validItems.push({
+        item,
+        wearChange: itemInput.wearChange || generalWear,
+        needRepair: itemInput.needRepair === true || itemInput.needRepair === "true",
+        note: itemInput.note || ""
+      });
+    }
+
+    if (invalidItems.length > 0) {
+      return send(res, 400, { error: "items_not_found", invalidItems });
+    }
+    if (unavailableItems.length > 0) {
+      return send(res, 400, { error: "items_unavailable", unavailableItems });
+    }
+
+    const now = new Date().toISOString();
+    const processedItems = [];
+
+    for (const { item, wearChange, needRepair, note } of validItems) {
+      const returnRecord = {
+        id: newId(),
+        returnDate,
+        returner,
+        wearChange,
+        needRepair,
+        note,
+        batchId: batch.id
+      };
+
+      item.returns ||= [];
+      item.returns.push(returnRecord);
+
+      const newStatus = needRepair ? "需修补" : "可借用";
+      item.status = newStatus;
+
+      item.logs ||= [];
+      item.logs.push({
+        at: now,
+        step: "归还",
+        note: "归还人：" + (returner || "未填写") +
+          " · 归还日期：" + returnDate +
+          (wearChange ? " · 磨损变化：" + wearChange : "") +
+          (note ? " · 备注：" + note : "") +
+          " · 检查结果：" + (needRepair ? "需修补" : "可借用") +
+          "（批次归还）（" + user.displayName + "）"
+      });
+
+      if (wearChange) {
+        item.wear = wearChange;
+      }
+
+      processedItems.push({
+        itemId: item.id || item.code,
+        code: item.code,
+        name: item.name,
+        status: newStatus,
+        returnRecord
+      });
+    }
+
+    batch.logs ||= [];
+    batch.logs.push({
+      at: now,
+      step: "批次归还",
+      note: `批量归还${processedItems.length}件道具：` +
+        processedItems.map(i => `${i.code}(${i.name})`).join("、") +
+        "（" + user.displayName + "）"
+    });
+
+    await saveDb(db);
+    return send(res, 201, {
+      batch: summarizeBatch(batch, db),
+      processedCount: processedItems.length,
+      items: processedItems
+    });
   }
 
   return null;
