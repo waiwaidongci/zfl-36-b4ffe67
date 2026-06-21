@@ -1,6 +1,6 @@
-import { fields, stages, statLabels, extraFields, maintenanceTypes } from "../public/constants.js";
+import { fields, stages, statLabels, extraFields, maintenanceTypes, repairOrderStatuses, repairOrderFields, repairAcceptanceResults } from "../public/constants.js";
 
-export { fields, stages, statLabels, extraFields, maintenanceTypes };
+export { fields, stages, statLabels, extraFields, maintenanceTypes, repairOrderStatuses, repairOrderFields, repairAcceptanceResults };
 
 export const seed = {
   items: [
@@ -165,6 +165,34 @@ export const seed = {
       date: "2026-05-30",
       person: "李工",
       notes: "竹篓底圈松动已记录"
+    }
+  ],
+  repairOrders: [
+    {
+      id: "CP-REP-1718000000000",
+      itemId: "CP-002",
+      itemCode: "CP-002",
+      itemName: "竹篓",
+      status: "处理中",
+      createdAt: "2026-06-12T18:00:00.000Z",
+      problemDescription: "底圈松动加重，需重新绑扎加固",
+      handler: "李工",
+      processingSteps: "已清理底圈松动部位，准备竹篾进行重新绑扎",
+      materialConsumption: "竹篾3根、细铁丝1米",
+      completionDate: "",
+      acceptanceResult: "",
+      logs: [
+        {
+          at: "2026-06-12T18:00:00.000Z",
+          step: "创建工单",
+          note: "归还检查时发现底圈松动加重，创建修补工单"
+        },
+        {
+          at: "2026-06-15T09:30:00.000Z",
+          step: "状态变更",
+          note: "状态更新为：处理中，开始进行修补作业"
+        }
+      ]
     }
   ]
 };

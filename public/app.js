@@ -4,6 +4,7 @@ import { loadReminders } from "./reminders.js";
 import { initImport } from "./import.js";
 import { initInventory } from "./inventory.js";
 import { initReturns } from "./returns.js";
+import { initRepairs } from "./repairs.js";
 
 const createForm = document.querySelector('#createForm');
 const actionForm = document.querySelector('#actionForm');
@@ -91,6 +92,7 @@ async function load() {
   await loadReminders(api, remindersEl);
   initInventory(api, load);
   initReturns(api, load);
+  initRepairs(api, load);
 }
 
 createForm.onsubmit = async event => {
