@@ -1,0 +1,9 @@
+{
+  "name": "zfl-36-cormorant-props",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
