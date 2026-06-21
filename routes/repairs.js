@@ -91,6 +91,10 @@ export async function handleRepairs(req, res, url) {
       "problemDescription", "handler", "processingSteps",
       "materialConsumption", "completionDate", "acceptanceResult", "status"
     ];
+    const changes = allowedFields
+      .filter(f => input[f] !== undefined && input[f] !== order[f])
+      .map(f => ({ field: f, before: order[f], after: input[f] }));
+
     for (const field of allowedFields) {
       if (input[field] !== undefined) {
         order[field] = input[field];
@@ -98,15 +102,24 @@ export async function handleRepairs(req, res, url) {
     }
 
     order.logs ||= [];
-    const changes = allowedFields
-      .filter(f => input[f] !== undefined && input[f] !== order[f])
-      .map(f => f + "=" + input[f])
+    const statusChange = changes.find(change => change.field === "status");
+    if (statusChange) {
+      order.logs.push({
+        at: new Date().toISOString(),
+        step: "状态变更",
+        note: "状态从「" + (statusChange.before || "未设置") + "」更新为「" + (statusChange.after || "未设置") + "」"
+      });
+    }
+
+    const fieldChanges = changes
+      .filter(change => change.field !== "status")
+      .map(change => change.field + "=" + change.after)
       .join(", ");
-    if (changes) {
+    if (fieldChanges) {
       order.logs.push({
         at: new Date().toISOString(),
         step: "更新",
-        note: "更新字段：" + changes
+        note: "更新字段：" + fieldChanges
       });
     }
 
