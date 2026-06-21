@@ -1,10 +1,23 @@
 import { loadDb, saveDb, body, send, newId, summarize } from "../db.js";
+import { statLabels } from "../public/constants.js";
+
+function computeStats(items) {
+  const stats = Object.fromEntries(statLabels.map(label => [label, 0]));
+  for (const item of items) {
+    if (stats[item.status] !== undefined) stats[item.status] += 1;
+  }
+  return stats;
+}
 
 export async function handleItems(req, res, url) {
   const db = await loadDb();
 
   if (req.method === "GET" && url.pathname === "/api/items") {
     return send(res, 200, db.items.map(summarize));
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/stats") {
+    return send(res, 200, computeStats(db.items));
   }
 
   if (req.method === "POST" && url.pathname === "/api/items") {
