@@ -20,7 +20,8 @@ npm start
 │   ├── items.js           道具 CRUD、借用、状态变更 API
 │   ├── maintenance.js     维护计划 API：设置计划、完成维护、提醒查询
 │   ├── import.js          批量导入 API：CSV 预览、确认导入
-│   └── inventory.js       存放点盘点 API：按存放点分组查询、新增/删除盘点记录
+│   ├── inventory.js       存放点盘点 API：按存放点分组查询、新增/删除盘点记录
+│   ├── qrcode.js          二维码标签 API：道具详情查询（支持 code/id 双标识）
 ├── public/
 │   ├── constants.js       共享常量：字段、状态、维护类型等（前后端共用）
 │   ├── page.js            HTML 页面生成与静态文件服务

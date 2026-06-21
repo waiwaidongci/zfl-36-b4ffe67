@@ -13,7 +13,8 @@ export async function handleQrcode(req, res, url) {
       .filter(l => l.step === "维护" || l.step === "检查")
       .slice(-1)[0];
 
-    const currentBorrowing = item.status === "已借出" && (item.borrowings || []).length > 0
+    const isBorrowedState = item.status === "已借出" || item.status === "待归还";
+    const currentBorrowing = isBorrowedState && (item.borrowings || []).length > 0
       ? item.borrowings[item.borrowings.length - 1]
       : null;
 
