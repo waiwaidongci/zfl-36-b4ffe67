@@ -13,6 +13,7 @@ import {
   cleanupOldBackups,
   ensureDirs,
   resolveDbPaths,
+  resolveBackupPath,
   tryParseJson,
   BACKUP_PREFIX
 } from "./services/storage.js";
@@ -38,6 +39,7 @@ export {
   getMigrationStatus,
   ensureDirs,
   resolveDbPaths,
+  resolveBackupPath,
   TARGET_SCHEMA_VERSION,
   ROOT_DIR,
   BACKUP_PREFIX,

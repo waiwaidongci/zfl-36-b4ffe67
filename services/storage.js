@@ -1,11 +1,13 @@
 import { mkdir, readFile, writeFile, rename, unlink, stat, readdir, copyFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { dirname, join, basename } from "node:path";
+import { dirname, join, basename, resolve } from "node:path";
 import { createHash } from "node:crypto";
 
 const BACKUP_PREFIX = "cormorant-props.backup-";
 const TMP_SUFFIX = ".tmp-write";
 export { BACKUP_PREFIX, TMP_SUFFIX };
+const BACKUP_NAME_RE = /^cormorant-props\.backup-[0-9]{8}-[0-9]{6}(?:-[A-Za-z0-9._-]+)?\.json$/;
+const PATH_SEP_RE = /[/\\]/;
 
 let writeLock = Promise.resolve();
 
@@ -27,6 +29,35 @@ function timestampLabel() {
 
 function checksum(data) {
   return createHash("sha256").update(data).digest("hex");
+}
+
+function invalidBackupName(message = "无效的备份文件名") {
+  const err = new Error(message);
+  err.code = "invalid_filename";
+  return err;
+}
+
+export function resolveBackupPath(rootDir, fileName) {
+  const { backupDir } = resolveDbPaths(rootDir);
+  if (typeof fileName !== "string" || fileName.length === 0) {
+    throw invalidBackupName("无效的备份文件名：不能为空");
+  }
+  if (PATH_SEP_RE.test(fileName) || fileName.includes("..")) {
+    throw invalidBackupName("无效的备份文件名：包含路径分隔符或目录穿越");
+  }
+  if (!fileName.startsWith(BACKUP_PREFIX) || !BACKUP_NAME_RE.test(fileName)) {
+    throw invalidBackupName("无效的备份文件名格式");
+  }
+  if (basename(fileName) !== fileName) {
+    throw invalidBackupName("无效的备份文件名：必须是纯文件名");
+  }
+
+  const resolvedBackupDir = resolve(backupDir);
+  const full = resolve(join(backupDir, fileName));
+  if (full !== join(resolvedBackupDir, fileName)) {
+    throw invalidBackupName("无效的备份文件名：路径越界");
+  }
+  return full;
 }
 
 export function resolveDbPaths(rootDir) {
@@ -168,7 +199,7 @@ export async function listBackups(rootDir) {
   for (const f of files) {
     if (!f.startsWith(BACKUP_PREFIX) || !f.endsWith(".json")) continue;
     try {
-      const full = join(backupDir, f);
+      const full = resolveBackupPath(rootDir, f);
       const s = await stat(full);
       const content = await readFile(full, "utf8");
       const parsed = tryParseJson(content);
@@ -190,11 +221,7 @@ export async function listBackups(rootDir) {
 }
 
 export async function readBackup(rootDir, fileName) {
-  const { backupDir } = resolveDbPaths(rootDir);
-  if (!fileName.startsWith(BACKUP_PREFIX)) {
-    throw new Error("无效的备份文件名");
-  }
-  const full = join(backupDir, fileName);
+  const full = resolveBackupPath(rootDir, fileName);
   const content = await readFile(full, "utf8");
   const parsed = tryParseJson(content);
   if (!parsed.ok) {

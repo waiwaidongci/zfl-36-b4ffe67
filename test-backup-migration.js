@@ -460,6 +460,9 @@ async function testPathBoundary() {
   const badNames = [
     "../etc/passwd",
     "cormorant-props.backup-../../etc/passwd",
+    "cormorant-props.backup-/../../cormorant-props.json",
+    "cormorant-props.backup-/../../../data/cormorant-props.json",
+    "cormorant-props.backup-%2F..%2F..%2Fcormorant-props.json",
     "evil.json",
     "../../../cormorant-props.backup-20260101-000000-test.json",
     "subdir/cormorant-props.backup-20260101-000000-test.json",
@@ -467,9 +470,11 @@ async function testPathBoundary() {
   ];
   for (const name of badNames) {
     let threw = false;
+    let invalidName = false;
     try { await storage.readBackup(TEST_DIR, name); }
-    catch (e) { threw = true; }
+    catch (e) { threw = true; invalidName = e.code === "invalid_filename" || e.message.includes("无效的备份文件名"); }
     assert(`非法文件名拦截: ${name}`, threw === true);
+    assert(`非法文件名错误类型: ${name}`, invalidName === true);
   }
 
   console.log("\n  [6.3] 合法文件名正常通过 readBackup 名称校验（不存在时抛文件不存在，不抛非法文件名）");
@@ -489,6 +494,7 @@ async function testPathBoundary() {
   const { join } = await import("node:path");
   await mkdir(join(TEST_DIR, "data", "backups"), { recursive: true });
   await writeFile(join(TEST_DIR, "data", "backups", BACKUP_PREFIX + "20260101-000000-good.json"), JSON.stringify({ schemaVersion: 1, items: [] }));
+  await writeFile(join(TEST_DIR, "data", "backups", BACKUP_PREFIX + "outside-dir.json"), JSON.stringify({ schemaVersion: 1, items: [] }));
   await writeFile(join(TEST_DIR, "data", "sneaky.json"), JSON.stringify({ schemaVersion: 1, items: [] }));
   await writeFile(join(TEST_DIR, "data", BACKUP_PREFIX + "outside-dir.json"), JSON.stringify({ schemaVersion: 1, items: [] }));
   const list = await storage.listBackups(TEST_DIR);

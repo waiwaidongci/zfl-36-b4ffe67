@@ -15,12 +15,12 @@ import {
   tryParseJson,
   TARGET_SCHEMA_VERSION,
   ROOT_DIR,
-  BACKUP_PREFIX
+  resolveBackupPath
 } from "../db.js";
 import { requirePermission, getCurrentUser } from "./auth.js";
 import { PERMISSIONS } from "../services/auth.js";
 import { applyMigrations, needsMigration, ensureIntegrity } from "../migrations/index.js";
-import { join, basename, resolve } from "node:path";
+import { join } from "node:path";
 
 function formatSize(bytes) {
   if (bytes < 1024) return bytes + " B";
@@ -28,37 +28,13 @@ function formatSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(2) + " MB";
 }
 
-const BACKUP_NAME_RE = /^cormorant-props\.backup-[0-9]{8}-[0-9]{6}(?:-[A-Za-z0-9._-]+)?\.json$/;
-const PATH_SEP_RE = /[/\\]/;
 function assertSafeBackupFilename(fileName, backupDir) {
-  if (typeof fileName !== "string" || fileName.length === 0) {
-    const err = new Error("备份文件名为空");
-    err.code = "invalid_filename"; err.statusCode = 400; throw err;
+  try {
+    return resolveBackupPath(ROOT_DIR, fileName);
+  } catch (err) {
+    err.statusCode = 400;
+    throw err;
   }
-  if (PATH_SEP_RE.test(fileName) || fileName.includes("..")) {
-    const err = new Error("非法的备份文件名：包含路径分隔符或目录穿越");
-    err.code = "invalid_filename"; err.statusCode = 400; throw err;
-  }
-  if (!BACKUP_NAME_RE.test(fileName)) {
-    const err = new Error("非法的备份文件名格式");
-    err.code = "invalid_filename"; err.statusCode = 400; throw err;
-  }
-  if (!fileName.startsWith(BACKUP_PREFIX)) {
-    const err = new Error("非法的备份文件名前缀");
-    err.code = "invalid_filename"; err.statusCode = 400; throw err;
-  }
-  const base = basename(fileName);
-  if (base !== fileName) {
-    const err = new Error("非法的备份文件名：不是纯文件名");
-    err.code = "invalid_filename"; err.statusCode = 400; throw err;
-  }
-  const full = resolve(join(backupDir, fileName));
-  const resolvedBackupDir = resolve(backupDir);
-  if (!full.startsWith(resolvedBackupDir)) {
-    const err = new Error("非法的备份文件名：路径越界");
-    err.code = "path_traversal"; err.statusCode = 400; throw err;
-  }
-  return full;
 }
 
 function backupFilename(label) {
