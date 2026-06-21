@@ -336,10 +336,12 @@ function showRepairModal(order, api, loadCallback) {
     completeForm.onsubmit = async (e) => {
       e.preventDefault();
       const formData = new FormData(completeForm);
+      const processingSteps = formData.get("processingSteps") || "";
       const acceptanceResult = formData.get("acceptanceResult");
+      if (!processingSteps.trim()) { alert("请填写处理步骤"); return; }
       if (!acceptanceResult) { alert("请选择验收结果"); return; }
       const payload = {
-        processingSteps: formData.get("processingSteps") || "",
+        processingSteps,
         materialConsumption: formData.get("materialConsumption") || "",
         completionDate: formData.get("completionDate") || new Date().toISOString().slice(0, 10),
         acceptanceResult
@@ -350,7 +352,8 @@ function showRepairModal(order, api, loadCallback) {
           method: "POST",
           body: JSON.stringify(payload)
         });
-        alert("工单完成成功！道具状态已更新为：" + (result.item && result.item.itemStatus ? result.item.itemStatus : (acceptanceResult === "不合格" ? "需修补" : "可借用")));
+        const newItemStatus = result.item && result.item.status ? result.item.status : (acceptanceResult === "不合格" ? "需修补" : "可借用");
+        alert("工单完成成功！道具状态已更新为：" + newItemStatus);
         modal.style.display = "none";
         await loadRepairView(api, loadCallback);
         await loadCallback();

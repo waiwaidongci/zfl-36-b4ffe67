@@ -1,4 +1,5 @@
 import { loadDb, saveDb, body, send, newId } from "../db.js";
+import { repairAcceptanceResults } from "../public/constants.js";
 
 function attachItemInfo(order, items) {
   const item = items.find(i => i.id === order.itemId || i.code === order.itemCode);
@@ -121,42 +122,74 @@ export async function handleRepairs(req, res, url) {
     const input = await body(req);
     const today = new Date().toISOString().slice(0, 10);
 
+    const acceptanceResult = input.acceptanceResult;
+    if (!acceptanceResult) {
+      return send(res, 400, { error: "acceptance_result_required", message: "验收结果为必填项" });
+    }
+    if (!repairAcceptanceResults.includes(acceptanceResult)) {
+      return send(res, 400, {
+        error: "invalid_acceptance_result",
+        message: "验收结果必须是：" + repairAcceptanceResults.join("、")
+      });
+    }
+    const processingSteps = input.processingSteps || order.processingSteps || "";
+    if (!processingSteps.trim()) {
+      return send(res, 400, { error: "processing_steps_required", message: "处理步骤为必填项" });
+    }
+
+    const oldStatus = order.status;
     order.status = "已完成";
     order.completionDate = input.completionDate || today;
-    if (input.processingSteps !== undefined) order.processingSteps = input.processingSteps;
-    if (input.materialConsumption !== undefined) order.materialConsumption = input.materialConsumption;
-    if (input.acceptanceResult !== undefined) order.acceptanceResult = input.acceptanceResult;
+    order.processingSteps = input.processingSteps !== undefined ? input.processingSteps : order.processingSteps;
+    order.materialConsumption = input.materialConsumption !== undefined ? input.materialConsumption : order.materialConsumption;
+    order.acceptanceResult = acceptanceResult;
 
     order.logs ||= [];
+    if (oldStatus !== "已完成") {
+      order.logs.push({
+        at: new Date().toISOString(),
+        step: "状态变更",
+        note: "状态从「" + oldStatus + "」更新为「已完成」"
+      });
+    }
     order.logs.push({
       at: new Date().toISOString(),
       step: "完成",
-      note: "修补完成，处理步骤：" + (input.processingSteps || order.processingSteps || "未填写") +
-        "；材料消耗：" + (input.materialConsumption || order.materialConsumption || "未填写") +
-        "；验收结果：" + (input.acceptanceResult || order.acceptanceResult || "未填写")
+      note: "修补完成，处理步骤：" + (processingSteps || "未填写") +
+        "；材料消耗：" + (order.materialConsumption || "未填写") +
+        "；验收结果：" + acceptanceResult
     });
 
     const item = db.items.find(x => x.id === order.itemId || x.code === order.itemCode);
+    let itemUpdated = null;
     if (item) {
-      if (input.acceptanceResult === "不合格") {
+      const oldItemStatus = item.status;
+      if (acceptanceResult === "不合格") {
         item.status = "需修补";
       } else {
         item.status = "可借用";
       }
       item.lastMaintenance = order.completionDate || today;
       item.logs ||= [];
+      if (oldItemStatus !== item.status) {
+        item.logs.push({
+          at: new Date().toISOString(),
+          step: "状态",
+          note: "状态从「" + oldItemStatus + "」更新为「" + item.status + "」（修补工单完成）"
+        });
+      }
       item.logs.push({
         at: new Date().toISOString(),
         step: "维护",
-        note: "修补工单（" + order.id + "）完成：" +
-          (input.processingSteps || order.processingSteps || "未填写") +
-          "；验收结果：" + (input.acceptanceResult || order.acceptanceResult || "未填写") +
-          "；状态更新为：" + item.status
+        note: "修补工单（" + order.id + "）完成：" + processingSteps +
+          "；材料消耗：" + (order.materialConsumption || "未填写") +
+          "；验收结果：" + acceptanceResult
       });
+      itemUpdated = item;
     }
 
     await saveDb(db);
-    return send(res, 200, { order, item: item ? attachItemInfo(order, db.items) : null });
+    return send(res, 200, { order, item: itemUpdated });
   }
 
   if (req.method === "DELETE" && url.pathname.match(/^\/api\/repair-orders\/([^/]+)$/)) {
