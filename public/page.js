@@ -19,6 +19,7 @@ export function renderPage() {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>鸬鹚捕鱼道具维护</title>
   <link rel="stylesheet" href="/public/style.css">
+  <link rel="stylesheet" href="/public/qrcode-label.css">
 </head>
 <body>
   <header><div><h1>鸬鹚捕鱼道具维护</h1><div class="meta">道具建档、演示借用、归还和维护闭环</div></div><button id="reload">刷新</button></header>
@@ -95,6 +96,7 @@ CP-101,木桨,划船演示,老杉木,器具架B
       <div class="panel"><h2>新增道具后可创建外出演示借用单，随后登记归还或维护备注。</h2><div class="grid" id="cards"></div></div>
     </section>
   </main>
+  <script src="/public/qrcode.js"></script>
   <script type="module" src="/public/app.js"></script>
 </body>
 </html>`;
@@ -115,4 +117,32 @@ export async function serveStatic(req, res, url) {
   } catch {
     return false;
   }
+}
+
+export function renderQrcodeDetailPage(identifier) {
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>道具详情 - 鸬鹚捕鱼道具维护</title>
+  <link rel="stylesheet" href="/public/style.css">
+  <link rel="stylesheet" href="/public/qrcode-detail.css">
+</head>
+<body class="qrcode-detail-page">
+  <div class="qrcode-detail-container">
+    <div class="qrcode-detail-header">
+      <h1>道具详情</h1>
+      <div class="qrcode-detail-meta">扫码查看道具信息</div>
+    </div>
+    <div id="qrcodeDetailContent" class="qrcode-detail-content">
+      <div class="loading">加载中...</div>
+    </div>
+    <div class="qrcode-detail-footer">
+      <div class="meta">鸬鹚捕鱼道具维护系统</div>
+    </div>
+  </div>
+  <script type="module" src="/public/qrcode-detail.js"></script>
+</body>
+</html>`;
 }

@@ -5,6 +5,7 @@ import { initImport } from "./import.js";
 import { initInventory } from "./inventory.js";
 import { initReturns } from "./returns.js";
 import { initRepairs } from "./repairs.js";
+import { initQrCodeFeatures } from "./qrcode-label.js";
 
 const createForm = document.querySelector('#createForm');
 const actionForm = document.querySelector('#actionForm');
@@ -47,6 +48,8 @@ function render() {
   );
   cards.innerHTML = visible.map(item => cardHtml(item)).join('');
 
+  window._items = items;
+
   document.querySelectorAll('[data-status]').forEach(sel => {
     sel.onchange = async () => {
       await api('/api/items/' + sel.dataset.status, { method: 'PATCH', body: JSON.stringify({ status: sel.value }) });
@@ -82,6 +85,7 @@ function cardHtml(item) {
     '<label>状态</label><select data-status="' + (item.id || item.code) + '">' +
     stages.map(s => '<option ' + (s === item.status ? 'selected' : '') + '>' + s + '</option>').join('') +
     '</select><button class="secondary" data-note="' + (item.id || item.code) + '">追加备注</button>' +
+    '<button class="secondary qr-btn" data-qrcode="' + (item.id || item.code) + '">二维码标签</button>' +
     planHtml +
     '<div class="logs meta">' + (logs || '暂无记录') + '</div></article>';
 }
@@ -115,4 +119,5 @@ document.querySelector('#reload').onclick = load;
 
 renderForms();
 initImport(api, load);
+initQrCodeFeatures(api, load);
 load();

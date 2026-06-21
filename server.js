@@ -6,7 +6,8 @@ import { handleImport } from "./routes/import.js";
 import { handleInventory } from "./routes/inventory.js";
 import { handleReturns } from "./routes/returns.js";
 import { handleRepairs } from "./routes/repairs.js";
-import { renderPage, serveStatic } from "./public/page.js";
+import { handleQrcode } from "./routes/qrcode.js";
+import { renderPage, renderQrcodeDetailPage, serveStatic } from "./public/page.js";
 
 const port = Number(process.env.PORT || 3036);
 
@@ -37,6 +38,14 @@ const server = http.createServer(async (req, res) => {
 
     const repairResult = await handleRepairs(req, res, url);
     if (repairResult !== null) return;
+
+    const qrcodeResult = await handleQrcode(req, res, url);
+    if (qrcodeResult !== null) return;
+
+    const qrDetailMatch = url.pathname.match(/^\/qrcode\/([^/]+)$/);
+    if (qrDetailMatch && req.method === "GET") {
+      return html(res, renderQrcodeDetailPage(qrDetailMatch[1]));
+    }
 
     send(res, 404, { error: "not_found" });
   } catch (error) {
