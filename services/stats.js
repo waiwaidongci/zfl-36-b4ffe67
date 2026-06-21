@@ -56,14 +56,34 @@ export function calculateOverdueCount(db, startDate, endDate) {
   return overdueItems.size;
 }
 
+const REPAIR_KEYWORDS = ["修补", "加固", "修复", "打蜡", "上漆", "打磨", "更换", "检修", "补扎", "梳理", "保养", "抛光", "清理", "上蜡"];
+
+function isMaintenanceRepairLog(log) {
+  if (log.step !== "维护") return false;
+  if (log.note && log.note.includes("CP-REP-")) return false;
+  if (log.note && log.note.includes("修补工单")) return false;
+  const note = log.note || "";
+  return REPAIR_KEYWORDS.some(k => note.includes(k));
+}
+
 export function calculateRepairCount(db, startDate, endDate) {
-  let count = 0;
+  const orderIds = new Set();
   for (const order of db.repairOrders || []) {
     if (isInDateRange(order.createdAt, startDate, endDate)) {
-      count++;
+      orderIds.add(order.id);
     }
   }
-  return count;
+
+  let logRepairCount = 0;
+  for (const item of db.items || []) {
+    for (const log of item.logs || []) {
+      if (isInDateRange(log.at, startDate, endDate) && isMaintenanceRepairLog(log)) {
+        logRepairCount++;
+      }
+    }
+  }
+
+  return orderIds.size + logRepairCount;
 }
 
 export function calculateAvailableRate(db) {
@@ -82,10 +102,16 @@ export function generateItemStats(db, startDate, endDate) {
       isInDateRange(b.at, startDate, endDate)
     ).length;
 
-    const repairCount = (db.repairOrders || []).filter(o =>
+    const repairOrderCount = (db.repairOrders || []).filter(o =>
       (o.itemId === id || o.itemCode === item.code) &&
       isInDateRange(o.createdAt, startDate, endDate)
     ).length;
+
+    const logRepairCount = (item.logs || []).filter(l =>
+      isInDateRange(l.at, startDate, endDate) && isMaintenanceRepairLog(l)
+    ).length;
+
+    const repairCount = repairOrderCount + logRepairCount;
 
     let overdueCount = 0;
     const now = new Date();
