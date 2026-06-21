@@ -22,7 +22,7 @@ export function renderPage() {
   <link rel="stylesheet" href="/public/qrcode-label.css">
 </head>
 <body>
-  <header><div><h1>鸬鹚捕鱼道具维护</h1><div class="meta">道具建档、演示借用、归还和维护闭环</div></div><div class="header-actions"><a href="/batches" class="nav-btn">📦 借用批次</a><button id="reload">刷新</button></div></header>
+  <header><div><h1>鸬鹚捕鱼道具维护</h1><div class="meta">道具建档、演示借用、归还和维护闭环</div></div><div class="header-actions"><a href="/reports" class="nav-btn">📊 运营报表</a><a href="/batches" class="nav-btn">📦 借用批次</a><button id="reload">刷新</button></div></header>
   <main>
     <section>
       <form id="createForm"><h2>新增道具</h2><div id="fields"></div><label>初始状态</label><select name="status">${stageOptions}</select><button>保存道具</button></form>
@@ -275,6 +275,80 @@ export function renderBatchDetailPage(batchId) {
     </section>
   </main>
   <script type="module" src="/public/batch-detail.js"></script>
+</body>
+</html>`;
+}
+
+export function renderReportsPage() {
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>运营报表 - 鸬鹚捕鱼道具维护</title>
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>运营报表</h1>
+      <div class="meta">按日期范围统计道具使用情况</div>
+    </div>
+    <div class="header-actions">
+      <a href="/" class="nav-btn">🏠 返回首页</a>
+      <button id="reload">刷新</button>
+    </div>
+  </header>
+  <main>
+    <section class="full-width">
+      <div class="panel">
+        <h2>统计筛选</h2>
+        <div class="report-filter">
+          <div class="filter-row">
+            <div class="filter-item">
+              <label>开始日期</label>
+              <input type="date" id="startDate">
+            </div>
+            <div class="filter-item">
+              <label>结束日期</label>
+              <input type="date" id="endDate">
+            </div>
+            <div class="filter-item filter-actions">
+              <button id="queryBtn">查询统计</button>
+              <button id="exportBtn" class="secondary">导出CSV</button>
+            </div>
+          </div>
+          <div class="quick-date">
+            <span class="meta">快捷选择：</span>
+            <button type="button" class="quick-btn secondary small" data-range="7">近7天</button>
+            <button type="button" class="quick-btn secondary small" data-range="30">近30天</button>
+            <button type="button" class="quick-btn secondary small" data-range="90">近90天</button>
+            <button type="button" class="quick-btn secondary small" data-range="all">全部</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <h2>汇总统计</h2>
+        <div id="reportSummary" class="report-summary">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <div class="toolbar">
+          <h2 style="margin:0">道具明细</h2>
+          <div>
+            <input id="search" placeholder="搜索编号或名称">
+          </div>
+        </div>
+        <div id="reportItems" style="margin-top:12px">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="/public/reports.js"></script>
 </body>
 </html>`;
 }

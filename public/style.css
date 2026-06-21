@@ -633,3 +633,103 @@ button.small {
   .header-actions { flex-wrap: wrap; }
   .batch-grid { grid-template-columns: 1fr; }
 }
+
+.report-filter { }
+.filter-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.filter-item {
+  flex: 1;
+  min-width: 140px;
+}
+.filter-actions {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+}
+.quick-date {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.quick-btn {
+  font-size: 12px;
+  padding: 5px 10px;
+}
+
+.report-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.summary-card {
+  background: #f8f9f6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+.summary-card span {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.summary-card strong {
+  display: block;
+  font-size: 26px;
+}
+.summary-card strong.ok { color: #2e7d32; }
+.summary-card strong.warn { color: var(--warn); }
+.summary-card strong.info { color: var(--info); }
+.summary-meta {
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+.report-table-wrap {
+  max-height: 500px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.report-table th,
+.report-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.report-table th {
+  background: #f6f8f4;
+  position: sticky;
+  top: 0;
+  font-weight: 700;
+  z-index: 1;
+}
+.report-table tbody tr:hover {
+  background: #fafbf9;
+}
+.report-table td.warn {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+@media (max-width: 700px) {
+  .filter-row { flex-direction: column; align-items: stretch; }
+  .filter-actions { justify-content: stretch; }
+  .filter-actions button { flex: 1; }
+  .report-summary-grid { grid-template-columns: repeat(2, 1fr); }
+  .report-table-wrap { overflow-x: auto; }
+}
