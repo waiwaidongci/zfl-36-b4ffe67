@@ -22,11 +22,36 @@ export function renderPage() {
   <link rel="stylesheet" href="/public/qrcode-label.css">
 </head>
 <body>
-  <header><div><h1>鸬鹚捕鱼道具维护</h1><div class="meta">道具建档、演示借用、归还和维护闭环</div></div><button id="reload">刷新</button></header>
+  <header><div><h1>鸬鹚捕鱼道具维护</h1><div class="meta">道具建档、演示借用、归还和维护闭环</div></div><div class="header-actions"><a href="/batches" class="nav-btn">📦 借用批次</a><button id="reload">刷新</button></div></header>
   <main>
     <section>
       <form id="createForm"><h2>新增道具</h2><div id="fields"></div><label>初始状态</label><select name="status">${stageOptions}</select><button>保存道具</button></form>
-      <form id="actionForm" style="margin-top:14px"><h2>创建演示借用单</h2><label>选择道具</label><select name="id" id="itemSelect"></select><div id="extraFields"></div><button>提交记录</button></form>
+      <form id="actionForm" style="margin-top:14px">
+        <h2>创建演示借用单</h2>
+        <div class="mode-switch">
+          <label><input type="radio" name="borrowMode" value="single" checked> 单道具借用</label>
+          <label><input type="radio" name="borrowMode" value="batch"> 批量借用（批次）</label>
+        </div>
+        <div id="singleMode">
+          <label>选择道具</label>
+          <select name="id" id="itemSelect"></select>
+        </div>
+        <div id="batchMode" style="display:none">
+          <label>批次名称</label>
+          <input name="batchName" placeholder="如：XX活动江面演示">
+          <label>选择道具（可多选，按住 Ctrl/Cmd 或点击复选框）</label>
+          <div id="multiSelectPanel" class="multi-select-panel"></div>
+          <div class="multi-select-summary">
+            <span>已选择 <strong id="selectedCount">0</strong> 件道具</span>
+            <button type="button" id="selectAllBtn" class="secondary">全选可借用</button>
+            <button type="button" id="clearSelectionBtn" class="secondary">清空选择</button>
+          </div>
+        </div>
+        <div id="extraFields"></div>
+        <label>备注</label>
+        <input name="remark" placeholder="选填，批次备注信息">
+        <button id="submitBtn">提交记录</button>
+      </form>
       <div class="panel" id="returnPanel" style="margin-top:14px"><h2>归还登记</h2><div class="meta">加载中...</div></div>
       <div class="panel" id="repairPanel" style="margin-top:14px"><h2>修补工单</h2><div class="meta">加载中...</div></div>
       <div class="panel" id="importPanel" style="margin-top:14px">
@@ -143,6 +168,113 @@ export function renderQrcodeDetailPage(identifier) {
     </div>
   </div>
   <script type="module" src="/public/qrcode-detail.js"></script>
+</body>
+</html>`;
+}
+
+export function renderBatchesPage() {
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>演示活动借用批次 - 鸬鹚捕鱼道具维护</title>
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>演示活动借用批次</h1>
+      <div class="meta">江面演示活动批量借用道具管理</div>
+    </div>
+    <div class="header-actions">
+      <a href="/" class="nav-btn">🏠 返回首页</a>
+      <button id="reload">刷新</button>
+    </div>
+  </header>
+  <main>
+    <section class="full-width">
+      <div class="panel">
+        <h2>批次统计</h2>
+        <div id="batchStats" class="batch-stats">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:14px">
+        <div class="toolbar">
+          <h2 style="margin:0">借用批次列表</h2>
+          <div>
+            <select id="statusFilter">
+              <option value="">全部状态</option>
+              <option value="active">进行中</option>
+              <option value="returned">已归还</option>
+            </select>
+            <input id="search" placeholder="搜索批次名称、活动、借用人">
+          </div>
+        </div>
+        <div id="batchList" style="margin-top:12px">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="/public/batches.js"></script>
+</body>
+</html>`;
+}
+
+export function renderBatchDetailPage(batchId) {
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>批次详情 - 鸬鹚捕鱼道具维护</title>
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>批次详情</h1>
+      <div class="meta" id="batchId">批次编号：加载中...</div>
+    </div>
+    <div class="header-actions">
+      <a href="/batches" class="nav-btn">📦 返回批次列表</a>
+      <a href="/" class="nav-btn">🏠 首页</a>
+    </div>
+  </header>
+  <main>
+    <section class="full-width">
+      <div class="panel">
+        <h2>批次信息</h2>
+        <div id="batchInfo" class="batch-info">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:14px">
+        <h2>未归还清单 <span class="pill warn" id="notReturnedCount" style="margin-left:8px">0</span></h2>
+        <div id="notReturnedList" style="margin-top:12px">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:14px">
+        <h2>所有道具 <span class="pill" id="totalCount" style="margin-left:8px">0</span></h2>
+        <div id="allItemsList" style="margin-top:12px">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:14px">
+        <h2>批次操作日志</h2>
+        <div id="batchLogs" class="logs" style="margin-top:12px">
+          <div class="loading">加载中...</div>
+        </div>
+        <div style="margin-top:12px">
+          <button id="addLogBtn" class="secondary">追加批次备注</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="/public/batch-detail.js"></script>
 </body>
 </html>`;
 }

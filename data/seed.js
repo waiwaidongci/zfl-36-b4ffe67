@@ -23,7 +23,8 @@ export const seed = {
           at: "2026-06-01T09:00:00.000Z",
           borrower: "王演示",
           eventName: "古镇文化节",
-          dueDate: "2026-06-03"
+          dueDate: "2026-06-03",
+          batchId: null
         }
       ],
       returns: [
@@ -60,7 +61,8 @@ export const seed = {
           at: "2026-06-10T10:00:00.000Z",
           borrower: "李展示",
           eventName: "非遗传承人活动",
-          dueDate: "2026-06-12"
+          dueDate: "2026-06-12",
+          batchId: null
         }
       ],
       returns: [
@@ -97,7 +99,8 @@ export const seed = {
           at: "2026-06-18T08:30:00.000Z",
           borrower: "赵演员",
           eventName: "民俗馆开馆仪式",
-          dueDate: "2026-06-22"
+          dueDate: "2026-06-22",
+          batchId: "BATCH-1718700000000"
         }
       ],
       logs: [
@@ -124,7 +127,8 @@ export const seed = {
           at: "2026-06-19T09:00:00.000Z",
           borrower: "钱船员",
           eventName: "水乡风情展演",
-          dueDate: "2026-06-23"
+          dueDate: "2026-06-23",
+          batchId: null
         }
       ],
       logs: [
@@ -192,6 +196,21 @@ export const seed = {
           step: "状态变更",
           note: "状态更新为：处理中，开始进行修补作业"
         }
+      ]
+    }
+  ],
+  borrowBatches: [
+    {
+      id: "BATCH-1718700000000",
+      name: "民俗馆开馆仪式江面演示",
+      eventName: "民俗馆开馆仪式",
+      borrower: "赵演员",
+      dueDate: "2026-06-22",
+      createdAt: "2026-06-18T08:30:00.000Z",
+      remark: "江面大型演示活动，需提前检查所有道具状态",
+      itemIds: ["CP-003"],
+      logs: [
+        { at: "2026-06-18T08:30:00.000Z", step: "创建批次", note: "创建民俗馆开馆仪式演示借用批次，含1件道具" }
       ]
     }
   ]

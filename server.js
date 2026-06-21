@@ -7,7 +7,8 @@ import { handleInventory } from "./routes/inventory.js";
 import { handleReturns } from "./routes/returns.js";
 import { handleRepairs } from "./routes/repairs.js";
 import { handleQrcode } from "./routes/qrcode.js";
-import { renderPage, renderQrcodeDetailPage, serveStatic } from "./public/page.js";
+import { handleBatches } from "./routes/batches.js";
+import { renderPage, renderQrcodeDetailPage, renderBatchesPage, renderBatchDetailPage, serveStatic } from "./public/page.js";
 
 const port = Number(process.env.PORT || 3036);
 
@@ -42,9 +43,22 @@ const server = http.createServer(async (req, res) => {
     const qrcodeResult = await handleQrcode(req, res, url);
     if (qrcodeResult !== null) return;
 
+    const batchesResult = await handleBatches(req, res, url);
+    if (batchesResult !== null) return;
+
     const qrDetailMatch = url.pathname.match(/^\/qrcode\/([^/]+)$/);
     if (qrDetailMatch && req.method === "GET") {
       return html(res, renderQrcodeDetailPage(qrDetailMatch[1]));
+    }
+
+    const batchesMatch = url.pathname.match(/^\/batches$/);
+    if (batchesMatch && req.method === "GET") {
+      return html(res, renderBatchesPage());
+    }
+
+    const batchDetailMatch = url.pathname.match(/^\/batches\/([^/]+)$/);
+    if (batchDetailMatch && req.method === "GET") {
+      return html(res, renderBatchDetailPage(batchDetailMatch[1]));
     }
 
     send(res, 404, { error: "not_found" });

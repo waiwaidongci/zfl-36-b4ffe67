@@ -7,12 +7,37 @@ import { seed } from "./data/seed.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dbPath = join(__dirname, "data", "cormorant-props.json");
 
+export function migrateDb(db) {
+  let changed = false;
+  if (!Array.isArray(db.borrowBatches)) {
+    db.borrowBatches = [];
+    changed = true;
+  }
+  for (const item of db.items) {
+    if (!Array.isArray(item.borrowings)) {
+      item.borrowings = [];
+      changed = true;
+    }
+    for (const b of item.borrowings) {
+      if (b.batchId === undefined) {
+        b.batchId = null;
+        changed = true;
+      }
+    }
+  }
+  return changed;
+}
+
 export async function loadDb() {
   if (!existsSync(dbPath)) {
     await mkdir(dirname(dbPath), { recursive: true });
     await writeFile(dbPath, JSON.stringify(seed, null, 2));
   }
-  return JSON.parse(await readFile(dbPath, "utf8"));
+  const db = JSON.parse(await readFile(dbPath, "utf8"));
+  if (migrateDb(db)) {
+    await saveDb(db);
+  }
+  return db;
 }
 
 export async function saveDb(db) {
@@ -37,6 +62,10 @@ export function html(res, text) {
 
 export function newId() {
   return "CP-" + Date.now();
+}
+
+export function newBatchId() {
+  return "BATCH-" + Date.now();
 }
 
 export function summarize(item) {
