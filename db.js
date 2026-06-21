@@ -2,7 +2,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { seed } from "./data/seed.js";
+import { seed, defaultUsers } from "./data/seed.js";
+import { hashPassword, cleanExpiredSessions } from "./services/auth.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dbPath = join(__dirname, "data", "cormorant-props.json");
@@ -24,6 +25,23 @@ export function migrateDb(db) {
         changed = true;
       }
     }
+  }
+  if (!Array.isArray(db.users)) {
+    db.users = defaultUsers.map(u => ({
+      ...u,
+      passwordHash: hashPassword(u.password),
+      createdAt: u.createdAt || new Date().toISOString()
+    }));
+    db.users.forEach(u => delete u.password);
+    changed = true;
+  }
+  if (!Array.isArray(db.sessions)) {
+    db.sessions = [];
+    changed = true;
+  }
+  const cleaned = cleanExpiredSessions(db);
+  if (cleaned > 0) {
+    changed = true;
   }
   return changed;
 }
@@ -66,6 +84,10 @@ export function newId() {
 
 export function newBatchId() {
   return "BATCH-" + Date.now();
+}
+
+export function newUserId() {
+  return "USER-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
 }
 
 export function summarize(item) {

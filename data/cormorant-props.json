@@ -979,5 +979,32 @@
         }
       ]
     }
-  ]
+  ],
+  "users": [
+    {
+      "id": "USER-DEFAULT-ADMIN",
+      "username": "admin",
+      "displayName": "系统管理员",
+      "role": "admin",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"
+    },
+    {
+      "id": "USER-DEFAULT-MAINTAINER",
+      "username": "maintainer",
+      "displayName": "张维护",
+      "role": "maintainer",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "passwordHash": "8ba8726d61f5c2ef9ec39b0f8a9ef397787d361caed663c18bfaebecb5256cd9"
+    },
+    {
+      "id": "USER-DEFAULT-VIEWER",
+      "username": "viewer",
+      "displayName": "李查看",
+      "role": "viewer",
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "passwordHash": "656d604dfdba41a262963cce53699bbc56cd7a2c0da1ad5ead45fc49214159d6"
+    }
+  ],
+  "sessions": []
 }

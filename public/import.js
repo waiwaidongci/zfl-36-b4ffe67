@@ -1,3 +1,5 @@
+import { applyPermissionGuards } from "./auth.js";
+
 let currentItems = [];
 
 export function initImport(api, load) {
@@ -88,6 +90,7 @@ export function initImport(api, load) {
 
       previewResult.style.display = 'block';
       commitBtn.disabled = currentItems.length === 0;
+      applyPermissionGuards();
     } catch (err) {
       alert('解析失败：' + err.message);
     } finally {

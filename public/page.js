@@ -22,10 +22,10 @@ export function renderPage() {
   <link rel="stylesheet" href="/public/qrcode-label.css">
 </head>
 <body>
-  <header><div><h1>鸬鹚捕鱼道具维护</h1><div class="meta">道具建档、演示借用、归还和维护闭环</div></div><div class="header-actions"><a href="/reports" class="nav-btn">📊 运营报表</a><a href="/batches" class="nav-btn">📦 借用批次</a><button id="reload">刷新</button></div></header>
+  <header><div><h1>鸬鹚捕鱼道具维护</h1><div class="meta">道具建档、演示借用、归还和维护闭环</div></div><div class="header-actions"><div id="userStatusBar"></div><a href="/reports" class="nav-btn">📊 运营报表</a><a href="/batches" class="nav-btn" data-perm="create_batch">📦 借用批次</a><button id="reload">刷新</button></div></header>
   <main>
     <section>
-      <form id="createForm"><h2>新增道具</h2><div id="fields"></div><label>初始状态</label><select name="status">${stageOptions}</select><button>保存道具</button></form>
+      <form id="createForm"><h2>新增道具</h2><div id="fields"></div><label>初始状态</label><select name="status">${stageOptions}</select><button data-perm="create_item">保存道具</button></form>
       <form id="actionForm" style="margin-top:14px">
         <h2>创建演示借用单</h2>
         <div class="mode-switch">
@@ -43,14 +43,14 @@ export function renderPage() {
           <div id="multiSelectPanel" class="multi-select-panel"></div>
           <div class="multi-select-summary">
             <span>已选择 <strong id="selectedCount">0</strong> 件道具</span>
-            <button type="button" id="selectAllBtn" class="secondary">全选可借用</button>
+            <button type="button" id="selectAllBtn" class="secondary" data-perm="borrow_item">全选可借用</button>
             <button type="button" id="clearSelectionBtn" class="secondary">清空选择</button>
           </div>
         </div>
         <div id="extraFields"></div>
         <label>备注</label>
         <input name="remark" placeholder="选填，批次备注信息">
-        <button id="submitBtn">提交记录</button>
+        <button id="submitBtn" data-perm="borrow_item">提交记录</button>
       </form>
       <div class="panel" id="returnPanel" style="margin-top:14px"><h2>归还登记</h2><div class="meta">加载中...</div></div>
       <div class="panel" id="repairPanel" style="margin-top:14px"><h2>修补工单</h2><div class="meta">加载中...</div></div>
@@ -83,8 +83,8 @@ CP-101,木桨,划船演示,老杉木,器具架B
         <label>粘贴 CSV 文本</label>
         <textarea id="csvInput" placeholder="编号,名称,用途,材质,存放点&#10;CP-100,鸬鹚脚环,标识识别,铝合金,工具盒A"></textarea>
         <div class="import-toolbar">
-          <button type="button" id="previewBtn">预览解析结果</button>
-          <label class="file-btn">
+          <button type="button" id="previewBtn" data-perm="import_items">预览解析结果</button>
+          <label class="file-btn" data-perm="import_items">
             <input type="file" id="fileInput" accept=".csv,text/csv" style="display:none">
             上传CSV文件
           </label>
@@ -108,7 +108,7 @@ CP-101,木桨,划船演示,老杉木,器具架B
             <ul class="dup-list"></ul>
           </div>
           <div class="commit-bar">
-            <button type="button" id="commitBtn" disabled>确认导入</button>
+            <button type="button" id="commitBtn" disabled data-perm="import_items">确认导入</button>
           </div>
         </div>
       </div>
@@ -188,6 +188,7 @@ export function renderBatchesPage() {
       <div class="meta">江面演示活动批量借用道具管理</div>
     </div>
     <div class="header-actions">
+      <div id="userStatusBar"></div>
       <a href="/" class="nav-btn">🏠 返回首页</a>
       <button id="reload">刷新</button>
     </div>
@@ -239,6 +240,7 @@ export function renderBatchDetailPage(batchId) {
       <div class="meta" id="batchId">批次编号：加载中...</div>
     </div>
     <div class="header-actions">
+      <div id="userStatusBar"></div>
       <a href="/batches" class="nav-btn">📦 返回批次列表</a>
       <a href="/" class="nav-btn">🏠 首页</a>
     </div>
@@ -269,7 +271,7 @@ export function renderBatchDetailPage(batchId) {
           <div class="loading">加载中...</div>
         </div>
         <div style="margin-top:12px">
-          <button id="addLogBtn" class="secondary">追加批次备注</button>
+          <button id="addLogBtn" class="secondary" data-perm="add_batch_log">追加批次备注</button>
         </div>
       </div>
     </section>
@@ -295,6 +297,7 @@ export function renderReportsPage() {
       <div class="meta">按日期范围统计道具使用情况</div>
     </div>
     <div class="header-actions">
+      <div id="userStatusBar"></div>
       <a href="/" class="nav-btn">🏠 返回首页</a>
       <button id="reload">刷新</button>
     </div>
@@ -349,6 +352,151 @@ export function renderReportsPage() {
     </section>
   </main>
   <script type="module" src="/public/reports.js"></script>
+</body>
+</html>`;
+}
+
+export function renderLoginPage() {
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录 - 鸬鹚捕鱼道具维护</title>
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+<body class="login-page">
+  <div class="login-container">
+    <div class="login-box">
+      <div class="login-header">
+        <h1>鸬鹚捕鱼道具维护</h1>
+        <div class="meta">请登录以继续使用系统</div>
+      </div>
+      <form id="loginForm" class="login-form">
+        <label>用户名</label>
+        <input name="username" type="text" placeholder="请输入用户名" required>
+        <label>密码</label>
+        <input name="password" type="password" placeholder="请输入密码" required>
+        <div id="loginError" class="login-error" style="display:none"></div>
+        <button type="submit">登 录</button>
+        <div class="login-tips">
+          <div class="meta">默认账号：</div>
+          <div class="meta">管理员 admin / admin123</div>
+          <div class="meta">维护员 maintainer / maintain123</div>
+          <div class="meta">只读 viewer / view123</div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script type="module" src="/public/auth.js"></script>
+</body>
+</html>`;
+}
+
+export function renderUsersPage() {
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>用户管理 - 鸬鹚捕鱼道具维护</title>
+  <link rel="stylesheet" href="/public/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <h1>用户管理</h1>
+      <div class="meta">管理系统用户账号和权限</div>
+    </div>
+    <div class="header-actions">
+      <div id="userStatusBar"></div>
+      <a href="/" class="nav-btn">🏠 返回首页</a>
+      <button id="reload">刷新</button>
+    </div>
+  </header>
+  <main>
+    <section class="full-width">
+      <div class="panel">
+        <div class="toolbar">
+          <h2 style="margin:0">用户列表</h2>
+          <div>
+            <button id="addUserBtn" data-perm="manage_users">+ 新增用户</button>
+            <button id="changePwdBtn" class="secondary">修改密码</button>
+          </div>
+        </div>
+        <div id="userList" style="margin-top:12px">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div id="userModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">新增用户</h3>
+        <span class="modal-close" id="modalClose">&times;</span>
+      </div>
+      <form id="userForm" class="modal-body">
+        <div id="userIdField" style="display:none">
+          <label>用户ID</label>
+          <input name="id" type="text" readonly>
+        </div>
+        <div id="usernameField">
+          <label>用户名</label>
+          <input name="username" type="text" placeholder="登录用户名" required>
+        </div>
+        <div>
+          <label>显示名称</label>
+          <input name="displayName" type="text" placeholder="显示名称" required>
+        </div>
+        <div>
+          <label>角色</label>
+          <select name="role" id="roleSelect">
+            <option value="admin">管理员</option>
+            <option value="maintainer">维护员</option>
+            <option value="viewer">只读用户</option>
+          </select>
+        </div>
+        <div id="passwordField">
+          <label>密码</label>
+          <input name="password" type="password" placeholder="登录密码">
+        </div>
+        <div id="pwdHint" class="meta">新增用户必填密码，修改用户时留空则不修改密码</div>
+        <div class="modal-footer">
+          <button type="button" class="secondary" id="modalCancel">取消</button>
+          <button type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="pwdModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>修改密码</h3>
+        <span class="modal-close" id="pwdModalClose">&times;</span>
+      </div>
+      <form id="pwdForm" class="modal-body">
+        <div>
+          <label>原密码</label>
+          <input name="oldPassword" type="password" required>
+        </div>
+        <div>
+          <label>新密码</label>
+          <input name="newPassword" type="password" required minlength="6">
+        </div>
+        <div>
+          <label>确认新密码</label>
+          <input name="confirmPassword" type="password" required minlength="6">
+        </div>
+        <div id="pwdError" class="login-error" style="display:none"></div>
+        <div class="modal-footer">
+          <button type="button" class="secondary" id="pwdModalCancel">取消</button>
+          <button type="submit">确认修改</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script type="module" src="/public/users.js"></script>
 </body>
 </html>`;
 }

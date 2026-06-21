@@ -1,3 +1,5 @@
+import { initAuth, renderLoginStatusBar, applyPermissionGuards, can } from "./auth.js";
+
 const batchId = window.location.pathname.split('/').pop();
 let batch = null;
 
@@ -54,7 +56,7 @@ function renderInfo() {
         <div class="meta" style="margin-top:4px">已归还 ${batch.returnedCount} / ${batch.totalCount} 件，未归还 ${batch.notReturnedCount} 件</div>
       </div>
       <div class="info-item" style="grid-column:span 2">
-        <button id="editInfoBtn" class="secondary">编辑批次信息</button>
+        <button id="editInfoBtn" class="secondary" data-perm="update_batch">编辑批次信息</button>
       </div>
     </div>
   `;
@@ -93,7 +95,7 @@ function renderItemRow(item) {
     ? '<span class="pill warn">未归还</span>'
     : '<span class="pill ok">已归还</span>';
   const actionBtn = item.stillBorrowed
-    ? `<button class="secondary small" data-return="${item.id}">登记归还</button>`
+    ? `<button class="secondary small" data-return="${item.id}" data-perm="return_item">登记归还</button>`
     : '';
   const dueLabel = item.dueDate ? `<div class="meta">📅 预计归还：${item.dueDate}</div>` : '';
 
@@ -194,6 +196,7 @@ async function load() {
     renderNotReturned();
     renderAllItems();
     renderLogs();
+    applyPermissionGuards();
   } catch (e) {
     document.querySelector('main').innerHTML = '<div class="error" style="padding:20px">加载失败：' + e.message + '</div>';
   }
@@ -215,4 +218,9 @@ document.getElementById('addLogBtn').onclick = async () => {
 
 document.getElementById('reload')?.addEventListener('click', load);
 
-load();
+(async () => {
+  await initAuth();
+  renderLoginStatusBar(document.getElementById("userStatusBar"));
+  applyPermissionGuards();
+  await load();
+})();

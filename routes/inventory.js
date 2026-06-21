@@ -1,4 +1,6 @@
 import { loadDb, saveDb, body, send, newId } from "../db.js";
+import { requirePermission } from "./auth.js";
+import { PERMISSIONS } from "../services/auth.js";
 
 export async function handleInventory(req, res, url) {
   const db = await loadDb();
@@ -36,6 +38,8 @@ export async function handleInventory(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/inventory") {
+    const user = await requirePermission(req, res, PERMISSIONS.CREATE_INVENTORY);
+    if (!user) return;
     const input = await body(req);
     if (!input.location) return send(res, 400, { error: "存放点不能为空" });
     if (!input.date) return send(res, 400, { error: "盘点日期不能为空" });
@@ -55,6 +59,8 @@ export async function handleInventory(req, res, url) {
 
   const patchMatch = url.pathname.match(/^\/api\/inventory\/([^/]+)$/);
   if (patchMatch && req.method === "PATCH") {
+    const user = await requirePermission(req, res, PERMISSIONS.UPDATE_INVENTORY);
+    if (!user) return;
     db.inventories ||= [];
     const record = db.inventories.find(x => x.id === patchMatch[1]);
     if (!record) return send(res, 404, { error: "inventory_not_found" });
@@ -69,6 +75,8 @@ export async function handleInventory(req, res, url) {
 
   const deleteMatch = url.pathname.match(/^\/api\/inventory\/([^/]+)$/);
   if (deleteMatch && req.method === "DELETE") {
+    const user = await requirePermission(req, res, PERMISSIONS.DELETE_INVENTORY);
+    if (!user) return;
     db.inventories ||= [];
     const idx = db.inventories.findIndex(x => x.id === deleteMatch[1]);
     if (idx === -1) return send(res, 404, { error: "inventory_not_found" });

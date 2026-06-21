@@ -1,8 +1,12 @@
 import { loadDb, saveDb, body, send } from "../db.js";
 import { parseCSV, buildItem, findDuplicates } from "../lib/csvParser.js";
+import { requirePermission } from "./auth.js";
+import { PERMISSIONS } from "../services/auth.js";
 
 export async function handleImport(req, res, url) {
   if (req.method === "POST" && url.pathname === "/api/import/preview") {
+    const user = await requirePermission(req, res, PERMISSIONS.IMPORT_ITEMS);
+    if (!user) return;
     const input = await body(req);
     const csvText = input.csvText || "";
 
@@ -27,6 +31,8 @@ export async function handleImport(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/import/commit") {
+    const user = await requirePermission(req, res, PERMISSIONS.IMPORT_ITEMS);
+    if (!user) return;
     const input = await body(req);
     const items = input.items || [];
 

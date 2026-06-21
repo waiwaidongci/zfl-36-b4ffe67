@@ -1,6 +1,34 @@
 import { fields, stages, statLabels, extraFields, maintenanceTypes, repairOrderStatuses, repairOrderFields, repairAcceptanceResults } from "../public/constants.js";
+import { ROLES } from "../services/auth.js";
 
 export { fields, stages, statLabels, extraFields, maintenanceTypes, repairOrderStatuses, repairOrderFields, repairAcceptanceResults };
+
+export const defaultUsers = [
+  {
+    id: "USER-DEFAULT-ADMIN",
+    username: "admin",
+    password: "admin123",
+    displayName: "系统管理员",
+    role: ROLES.ADMIN,
+    createdAt: "2026-01-01T00:00:00.000Z"
+  },
+  {
+    id: "USER-DEFAULT-MAINTAINER",
+    username: "maintainer",
+    password: "maintain123",
+    displayName: "张维护",
+    role: ROLES.MAINTAINER,
+    createdAt: "2026-01-01T00:00:00.000Z"
+  },
+  {
+    id: "USER-DEFAULT-VIEWER",
+    username: "viewer",
+    password: "view123",
+    displayName: "李查看",
+    role: ROLES.VIEWER,
+    createdAt: "2026-01-01T00:00:00.000Z"
+  }
+];
 
 export const seed = {
   items: [

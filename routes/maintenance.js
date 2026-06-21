@@ -1,9 +1,13 @@
 import { loadDb, saveDb, body, send } from "../db.js";
+import { requirePermission } from "./auth.js";
+import { PERMISSIONS } from "../services/auth.js";
 
 export async function handleMaintenance(req, res, url) {
   const db = await loadDb();
 
   if (req.method === "PUT" && url.pathname.match(/^\/api\/items\/([^/]+)\/maintenance-plan$/)) {
+    const user = await requirePermission(req, res, PERMISSIONS.SET_MAINTENANCE_PLAN);
+    if (!user) return;
     const match = url.pathname.match(/^\/api\/items\/([^/]+)\/maintenance-plan$/);
     const item = db.items.find(x => x.id === match[1] || x.code === match[1]);
     if (!item) return send(res, 404, { error: "item_not_found" });
@@ -17,13 +21,15 @@ export async function handleMaintenance(req, res, url) {
     item.logs.push({
       at: new Date().toISOString(),
       step: "维护计划",
-      note: "设置下次维护：" + (input.nextDate || "") + " · " + (input.type || "") + " · " + (input.responsible || "")
+      note: "设置下次维护：" + (input.nextDate || "") + " · " + (input.type || "") + " · " + (input.responsible || "") + "（" + user.displayName + "）"
     });
     await saveDb(db);
     return send(res, 200, item);
   }
 
   if (req.method === "POST" && url.pathname.match(/^\/api\/items\/([^/]+)\/complete-maintenance$/)) {
+    const user = await requirePermission(req, res, PERMISSIONS.COMPLETE_MAINTENANCE);
+    if (!user) return;
     const match = url.pathname.match(/^\/api\/items\/([^/]+)\/complete-maintenance$/);
     const item = db.items.find(x => x.id === match[1] || x.code === match[1]);
     if (!item) return send(res, 404, { error: "item_not_found" });
@@ -34,7 +40,7 @@ export async function handleMaintenance(req, res, url) {
     item.logs.push({
       at: new Date().toISOString(),
       step: "完成维护",
-      note: (input.note || "维护完成") + (item.maintenancePlan ? "（" + item.maintenancePlan.type + "）" : "")
+      note: (input.note || "维护完成") + (item.maintenancePlan ? "（" + item.maintenancePlan.type + "）" : "") + "（" + user.displayName + "）"
     });
     item.maintenancePlan = null;
     await saveDb(db);

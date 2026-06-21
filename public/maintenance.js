@@ -15,7 +15,7 @@ export function renderPlanHtml(item) {
           <div><strong>维护类型：</strong>${plan.type || '未设置'}</div>
           <div><strong>负责人：</strong>${plan.responsible || '未设置'}</div>
         </div>
-        <button class="complete-btn" data-complete="${itemId}">完成维护</button>
+        <button class="complete-btn" data-complete="${itemId}" data-perm="complete_maintenance">完成维护</button>
       </div>`;
   } else {
     return `
@@ -34,7 +34,7 @@ export function renderPlanHtml(item) {
               <label>负责人</label><input name="responsible">
             </div>
           </div>
-          <button data-set-plan="${itemId}">设置维护计划</button>
+          <button data-set-plan="${itemId}" data-perm="set_maintenance_plan">设置维护计划</button>
         </div>
       </div>`;
   }

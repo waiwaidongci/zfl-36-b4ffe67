@@ -1,5 +1,7 @@
 import { loadDb, saveDb, body, send, newId } from "../db.js";
 import { repairAcceptanceResults } from "../public/constants.js";
+import { requirePermission } from "./auth.js";
+import { PERMISSIONS } from "../services/auth.js";
 
 function attachItemInfo(order, items) {
   const item = items.find(i => i.id === order.itemId || i.code === order.itemCode);
@@ -38,6 +40,8 @@ export async function handleRepairs(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/repair-orders") {
+    const user = await requirePermission(req, res, PERMISSIONS.CREATE_REPAIR_ORDER);
+    if (!user) return;
     const input = await body(req);
     const itemId = input.itemId || input.itemCode;
     const item = db.items.find(x => x.id === itemId || x.code === itemId);
@@ -63,7 +67,7 @@ export async function handleRepairs(req, res, url) {
         {
           at: new Date().toISOString(),
           step: "创建工单",
-          note: "创建修补工单，问题描述：" + (input.problemDescription || item.wear || "未填写")
+          note: "创建修补工单，问题描述：" + (input.problemDescription || item.wear || "未填写") + "（" + user.displayName + "）"
         }
       ]
     };
@@ -74,7 +78,7 @@ export async function handleRepairs(req, res, url) {
     item.logs.push({
       at: new Date().toISOString(),
       step: "修补工单",
-      note: "创建修补工单（" + order.id + "），问题：" + (input.problemDescription || item.wear || "未填写")
+      note: "创建修补工单（" + order.id + "），问题：" + (input.problemDescription || item.wear || "未填写") + "（" + user.displayName + "）"
     });
 
     await saveDb(db);
@@ -82,6 +86,8 @@ export async function handleRepairs(req, res, url) {
   }
 
   if (req.method === "PATCH" && url.pathname.match(/^\/api\/repair-orders\/([^/]+)$/)) {
+    const user = await requirePermission(req, res, PERMISSIONS.UPDATE_REPAIR_ORDER);
+    if (!user) return;
     const match = url.pathname.match(/^\/api\/repair-orders\/([^/]+)$/);
     const order = db.repairOrders.find(o => o.id === match[1]);
     if (!order) return send(res, 404, { error: "repair_order_not_found" });
@@ -107,7 +113,7 @@ export async function handleRepairs(req, res, url) {
       order.logs.push({
         at: new Date().toISOString(),
         step: "状态变更",
-        note: "状态从「" + (statusChange.before || "未设置") + "」更新为「" + (statusChange.after || "未设置") + "」"
+        note: "状态从「" + (statusChange.before || "未设置") + "」更新为「" + (statusChange.after || "未设置") + "」（" + user.displayName + "）"
       });
     }
 
@@ -119,7 +125,7 @@ export async function handleRepairs(req, res, url) {
       order.logs.push({
         at: new Date().toISOString(),
         step: "更新",
-        note: "更新字段：" + fieldChanges
+        note: "更新字段：" + fieldChanges + "（" + user.displayName + "）"
       });
     }
 
@@ -128,6 +134,8 @@ export async function handleRepairs(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname.match(/^\/api\/repair-orders\/([^/]+)\/complete$/)) {
+    const user = await requirePermission(req, res, PERMISSIONS.COMPLETE_REPAIR_ORDER);
+    if (!user) return;
     const match = url.pathname.match(/^\/api\/repair-orders\/([^/]+)\/complete$/);
     const order = db.repairOrders.find(o => o.id === match[1]);
     if (!order) return send(res, 404, { error: "repair_order_not_found" });
@@ -162,7 +170,7 @@ export async function handleRepairs(req, res, url) {
       order.logs.push({
         at: new Date().toISOString(),
         step: "状态变更",
-        note: "状态从「" + oldStatus + "」更新为「已完成」"
+        note: "状态从「" + oldStatus + "」更新为「已完成」（" + user.displayName + "）"
       });
     }
     order.logs.push({
@@ -170,7 +178,7 @@ export async function handleRepairs(req, res, url) {
       step: "完成",
       note: "修补完成，处理步骤：" + (processingSteps || "未填写") +
         "；材料消耗：" + (order.materialConsumption || "未填写") +
-        "；验收结果：" + acceptanceResult
+        "；验收结果：" + acceptanceResult + "（" + user.displayName + "）"
     });
 
     const item = db.items.find(x => x.id === order.itemId || x.code === order.itemCode);
@@ -188,7 +196,7 @@ export async function handleRepairs(req, res, url) {
         item.logs.push({
           at: new Date().toISOString(),
           step: "状态",
-          note: "状态从「" + oldItemStatus + "」更新为「" + item.status + "」（修补工单完成）"
+          note: "状态从「" + oldItemStatus + "」更新为「" + item.status + "」（修补工单完成）（" + user.displayName + "）"
         });
       }
       item.logs.push({
@@ -196,7 +204,7 @@ export async function handleRepairs(req, res, url) {
         step: "维护",
         note: "修补工单（" + order.id + "）完成：" + processingSteps +
           "；材料消耗：" + (order.materialConsumption || "未填写") +
-          "；验收结果：" + acceptanceResult
+          "；验收结果：" + acceptanceResult + "（" + user.displayName + "）"
       });
       itemUpdated = item;
     }
@@ -206,6 +214,8 @@ export async function handleRepairs(req, res, url) {
   }
 
   if (req.method === "DELETE" && url.pathname.match(/^\/api\/repair-orders\/([^/]+)$/)) {
+    const user = await requirePermission(req, res, PERMISSIONS.DELETE_REPAIR_ORDER);
+    if (!user) return;
     const match = url.pathname.match(/^\/api\/repair-orders\/([^/]+)$/);
     const idx = db.repairOrders.findIndex(o => o.id === match[1]);
     if (idx === -1) return send(res, 404, { error: "repair_order_not_found" });

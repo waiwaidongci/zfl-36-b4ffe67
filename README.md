@@ -337,3 +337,157 @@ CSV 文件采用 UTF-8 BOM 编码，确保在 Excel 中正确显示中文。
 | `generateItemStats(db, startDate, endDate)` | 生成按道具维度的统计明细 |
 | `getReportSummary(db, startDate, endDate)` | 获取汇总统计数据 |
 | `generateCSV(report)` | 生成 CSV 字符串（含 BOM） |
+
+## 账号与权限模块
+
+纯 Node.js 实现的轻量级 RBAC 权限系统，**不引入任何第三方框架**，基于 Cookie + Token 会话认证，支持三级角色权限控制。
+
+### 核心设计原则
+
+| 原则 | 说明 |
+|------|------|
+| **零依赖** | 纯 `node:http` + `node:crypto` 实现，无 Express、Passport 等框架 |
+| **向后兼容** | 所有 GET 接口保持无需登录访问，老数据文件自动迁移升级 |
+| **读写分离** | 读操作（列表/详情/报表/扫码）公开，写操作均需登录 + 权限校验 |
+| **双重防护** | 前端按钮可见性控制 + 后端 API 权限拦截，双重保证安全 |
+
+### 角色与权限矩阵
+
+| 操作权限 | 管理员 admin | 维护员 maintainer | 只读用户 viewer | 未登录 |
+|----------|:---:|:---:|:---:|:---:|
+| 新增道具 | ✅ | ❌ | ❌ | ❌ |
+| 修改道具状态 | ✅ | ❌ | ❌ | ❌ |
+| 追加维护/日志 | ✅ | ✅ | ❌ | ❌ |
+| 创建借用 | ✅ | ❌ | ❌ | ❌ |
+| 归还登记 | ✅ | ✅ | ❌ | ❌ |
+| 设置维护计划 | ✅ | ❌ | ❌ | ❌ |
+| 完成维护 | ✅ | ✅ | ❌ | ❌ |
+| 新增/修改/删除盘点 | ✅ | 创建✅/修改❌/删除❌ | ❌ | ❌ |
+| 创建/更新/完成/删除工单 | ✅ | 创建✅/更新✅/完成✅/删除❌ | ❌ | ❌ |
+| CSV 批量导入 | ✅ | ❌ | ❌ | ❌ |
+| 创建/修改批次 | ✅ | ❌ | ❌ | ❌ |
+| 追加批次日志 | ✅ | ✅ | ❌ | ❌ |
+| 用户管理（增删改） | ✅ | ❌ | ❌ | ❌ |
+| 查看列表/详情/报表 | ✅ | ✅ | ✅ | ✅ |
+| 扫码查看详情 | ✅ | ✅ | ✅ | ✅ |
+
+### 默认账号
+
+首次启动时自动创建以下 3 个默认账号（密码建议登录后立即修改）：
+
+| 用户名 | 密码 | 角色 | 显示名称 |
+|--------|------|------|----------|
+| `admin` | `admin123` | 管理员 | 系统管理员 |
+| `maintainer` | `maintain123` | 维护员 | 张维护 |
+| `viewer` | `view123` | 只读用户 | 李查看 |
+
+访问路径：**`/login`** 登录，**`/users`** 用户管理（仅管理员）。
+
+### 技术实现细节
+
+#### 认证安全
+
+- **密码哈希**：SHA256 单向哈希，数据库仅存储 `passwordHash`，不存储明文
+- **会话机制**：随机 32 字节 Hex Token，7 天有效期，Cookie 存储
+- **Cookie 属性**：`HttpOnly`（防 XSS）+ `SameSite=Lax`（防 CSRF）
+- **自动清理**：每次读写数据库时自动清理过期会话
+- **Bearer 兼容**：同时支持 Cookie 和 `Authorization: Bearer <token>` 两种认证方式
+
+#### 权限检查模式
+
+后端统一使用 `requirePermission(req, res, permission)` 中间件函数：
+
+```javascript
+// routes/items.js 示例
+const user = requirePermission(req, res, PERMISSIONS.CREATE_ITEM);
+if (!user) return;  // 函数内部已发送 401/403 响应
+// 执行业务逻辑...
+item.logs.push({ note: `${note}（${user.displayName}）` });  // 自动附加操作人
+```
+
+- 未登录 → HTTP 401 `{ error: "unauthorized" }`
+- 权限不足 → HTTP 403 `{ error: "forbidden" }`
+- 校验通过 → 返回用户对象，用于日志审计
+
+#### 前端权限控制
+
+使用 `data-perm="xxx"` 属性声明式控制按钮可见性：
+
+```html
+<button data-perm="create_item">新增道具</button>
+<button data-perm="add_log">追加日志</button>
+<a href="/users" data-perm="manage_users">用户管理</a>
+```
+
+页面启动时调用 `applyPermissionGuards()` 自动隐藏无权限元素。所有写操作按钮都带权限属性，即使手动 DOM 操作显示按钮，后端仍会二次拦截。
+
+### 数据结构（JSON 文件字段）
+
+#### users 数组
+
+```json
+{
+  "id": "USER-DEFAULT-ADMIN",
+  "username": "admin",
+  "displayName": "系统管理员",
+  "role": "admin",
+  "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "lastLoginAt": "2026-06-21T09:07:59.846Z"
+}
+```
+
+#### sessions 数组
+
+```json
+{
+  "token": "<随机会话令牌>",
+  "userId": "USER-DEFAULT-ADMIN",
+  "createdAt": "2026-06-21T09:07:59.846Z",
+  "expiresAt": "2026-06-28T09:07:59.846Z"
+}
+```
+
+### API 端点
+
+#### 认证接口
+
+| 方法 | 路径 | 说明 | 登录要求 |
+|------|------|------|----------|
+| POST | `/api/auth/login` | 登录，body: `{ username, password }` | ❌ |
+| POST | `/api/auth/logout` | 登出，清除会话和 Cookie | ✅ |
+| GET | `/api/auth/me` | 获取当前用户信息和角色定义 | 可选 |
+| POST | `/api/auth/change-password` | 修改当前用户密码，body: `{ oldPassword, newPassword }` | ✅ |
+
+#### 用户管理接口（仅管理员）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/users` | 获取用户列表（不含密码哈希） |
+| POST | `/api/users` | 新增用户，body: `{ username, password, displayName, role }` |
+| PATCH | `/api/users/:id` | 修改用户，body: `{ displayName, role, password? }` |
+| DELETE | `/api/users/:id` | 删除用户（同时删除该用户所有会话），禁止删除自己 |
+
+### 文件清单（权限模块相关）
+
+| 文件 | 职责 |
+|------|------|
+| `services/auth.js` | 认证服务：密码哈希、会话管理、角色权限常量、权限检查函数 |
+| `routes/auth.js` | 认证路由：登录/登出/用户 CRUD/修改密码 API、`requirePermission()` 权限中间件 |
+| `public/auth.js` | 前端权限模块：`initAuth()`、`can()`、`renderLoginStatusBar()`、`applyPermissionGuards()` |
+| `public/users.js` | 用户管理页：列表 CRUD、修改密码弹窗 |
+| `data/seed.js` | 新增 `defaultUsers` 默认账号种子（明文密码，迁移时自动哈希） |
+| `db.js` | `migrateDb()` 新增 users/sessions 字段迁移逻辑 |
+| `routes/*.js` | 所有写操作接口调用 `requirePermission()` 进行权限拦截 |
+
+### 平滑升级说明
+
+从**无账号版本**升级到此版本**完全无需人工操作**：
+
+1. 首次启动新版代码时，`migrateDb()` 检测到 JSON 文件无 `users` 字段
+2. 自动初始化 3 个默认账号（密码哈希后写入）
+3. 自动初始化空 `sessions` 数组
+4. 清理不存在或过期的会话数据
+5. **已有道具/借用/维护等数据完全不变**，所有历史数据正常使用
+6. GET 接口仍可匿名访问，扫码查看功能不受影响
+7. 用户点击写操作按钮时，系统会自动跳转到登录页

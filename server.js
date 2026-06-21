@@ -9,7 +9,8 @@ import { handleRepairs } from "./routes/repairs.js";
 import { handleQrcode } from "./routes/qrcode.js";
 import { handleBatches } from "./routes/batches.js";
 import { handleReports } from "./routes/reports.js";
-import { renderPage, renderQrcodeDetailPage, renderBatchesPage, renderBatchDetailPage, renderReportsPage, serveStatic } from "./public/page.js";
+import { handleAuth } from "./routes/auth.js";
+import { renderPage, renderQrcodeDetailPage, renderBatchesPage, renderBatchDetailPage, renderReportsPage, renderLoginPage, renderUsersPage, serveStatic } from "./public/page.js";
 
 const port = Number(process.env.PORT || 3036);
 
@@ -21,7 +22,14 @@ const server = http.createServer(async (req, res) => {
       return html(res, renderPage());
     }
 
+    if (req.method === "GET" && url.pathname === "/login") {
+      return html(res, renderLoginPage());
+    }
+
     if (await serveStatic(req, res, url)) return;
+
+    const authResult = await handleAuth(req, res, url);
+    if (authResult !== null) return;
 
     const itemResult = await handleItems(req, res, url);
     if (itemResult !== null) return;
@@ -68,6 +76,11 @@ const server = http.createServer(async (req, res) => {
     const reportsMatch = url.pathname.match(/^\/reports$/);
     if (reportsMatch && req.method === "GET") {
       return html(res, renderReportsPage());
+    }
+
+    const usersMatch = url.pathname.match(/^\/users$/);
+    if (usersMatch && req.method === "GET") {
+      return html(res, renderUsersPage());
     }
 
     send(res, 404, { error: "not_found" });

@@ -1,4 +1,6 @@
 import { loadDb, saveDb, body, send, newId } from "../db.js";
+import { requirePermission } from "./auth.js";
+import { PERMISSIONS } from "../services/auth.js";
 
 export async function handleReturns(req, res, url) {
   const db = await loadDb();
@@ -23,6 +25,8 @@ export async function handleReturns(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname.match(/^\/api\/items\/([^/]+)\/return$/)) {
+    const user = await requirePermission(req, res, PERMISSIONS.RETURN_ITEM);
+    if (!user) return;
     const match = url.pathname.match(/^\/api\/items\/([^/]+)\/return$/);
     const item = db.items.find(x => x.id === match[1] || x.code === match[1]);
     if (!item) return send(res, 404, { error: "item_not_found" });
@@ -59,7 +63,8 @@ export async function handleReturns(req, res, url) {
       note: "归还人：" + (returner || "未填写") +
         " · 归还日期：" + returnDate +
         (wearChange ? " · 磨损变化：" + wearChange : "") +
-        " · 检查结果：" + (needRepair ? "需修补" : "可借用")
+        " · 检查结果：" + (needRepair ? "需修补" : "可借用") +
+        "（" + user.displayName + "）"
     });
 
     if (wearChange) {

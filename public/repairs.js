@@ -1,4 +1,5 @@
 import { repairOrderStatuses, repairAcceptanceResults } from "./constants.js";
+import { initAuth, renderLoginStatusBar, applyPermissionGuards, can } from "./auth.js";
 
 export function initRepairs(api, loadCallback) {
   loadRepairView(api, loadCallback);
@@ -54,7 +55,7 @@ function renderRepairSection(api, loadCallback) {
     html += '<textarea name="problemDescription" id="repairProblem" placeholder="详细描述需要修补的问题"></textarea>';
     html += '<label>处理人</label>';
     html += '<input name="handler" id="repairHandler" placeholder="负责修补的人员姓名">';
-    html += '<button type="submit">创建修补工单</button>';
+    html += '<button type="submit" data-perm="create_repair_order">创建修补工单</button>';
     html += '</form>';
   }
   html += '</div>';
@@ -112,11 +113,13 @@ function renderRepairSection(api, loadCallback) {
       if (listEl) {
         listEl.innerHTML = renderRepairOrdersList(repairOrders, statusFilter.value);
         bindRepairOrderEvents(api, loadCallback);
+        applyPermissionGuards();
       }
     };
   }
 
   bindRepairOrderEvents(api, loadCallback);
+  applyPermissionGuards();
 }
 
 function computeRepairStats(orders) {
@@ -159,8 +162,8 @@ function renderRepairOrderCard(order) {
       <div class="repair-order-actions">
         <button class="secondary" data-view-order="${escapeAttr(order.id)}">查看详情</button>
         ${(order.status !== "已完成" && order.status !== "已验收") ?
-          '<button data-complete-order="' + escapeAttr(order.id) + '">完成工单</button>' : ''}
-        <button class="secondary" data-delete-order="${escapeAttr(order.id)}" style="background:#9b4937;">删除</button>
+          '<button data-complete-order="' + escapeAttr(order.id) + '" data-perm="complete_repair_order">完成工单</button>' : ''}
+        <button class="secondary" data-delete-order="${escapeAttr(order.id)}" style="background:#9b4937;" data-perm="delete_repair_order">删除</button>
       </div>
     </div>`;
 }
@@ -205,7 +208,7 @@ function renderRepairOrderDetail(order) {
       html += '<option value="' + escapeAttr(s) + '"' + (s === order.status ? ' selected' : '') + '>' + escapeHtml(s) + '</option>';
     }
     html += '</select>';
-    html += '<button type="submit">更新状态</button>';
+    html += '<button type="submit" data-perm="update_repair_order">更新状态</button>';
     html += '</form>';
     html += '</div>';
 
@@ -225,7 +228,7 @@ function renderRepairOrderDetail(order) {
       html += '<option value="' + escapeAttr(r) + '">' + escapeHtml(r) + '</option>';
     }
     html += '</select>';
-    html += '<button type="submit">确认完成</button>';
+    html += '<button type="submit" data-perm="complete_repair_order">确认完成</button>';
     html += '</form>';
     html += '</div>';
   }
@@ -295,6 +298,7 @@ function showRepairModal(order, api, loadCallback) {
   if (!modal) return;
   modal.innerHTML = renderRepairOrderDetail(order);
   modal.style.display = "block";
+  applyPermissionGuards();
 
   const closeBtn = document.querySelector("#closeRepairModal");
   if (closeBtn) {
@@ -323,6 +327,7 @@ function showRepairModal(order, api, loadCallback) {
         alert("状态更新成功！");
         const updated = await api("/api/repair-orders/" + order.id);
         modal.innerHTML = renderRepairOrderDetail(updated);
+        applyPermissionGuards();
         await loadRepairView(api, loadCallback);
         await loadCallback();
       } catch (err) {

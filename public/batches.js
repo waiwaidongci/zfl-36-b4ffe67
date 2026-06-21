@@ -1,3 +1,5 @@
+import { initAuth, renderLoginStatusBar, applyPermissionGuards, can } from "./auth.js";
+
 let batches = [];
 
 async function api(path, options) {
@@ -103,6 +105,7 @@ async function load() {
     batches = await api('/api/batches');
     renderStats();
     renderList();
+    applyPermissionGuards();
   } catch (e) {
     document.getElementById('batchStats').innerHTML = '<div class="error">加载失败：' + e.message + '</div>';
     document.getElementById('batchList').innerHTML = '';
@@ -113,4 +116,9 @@ document.getElementById('statusFilter').onchange = renderList;
 document.getElementById('search').oninput = renderList;
 document.getElementById('reload').onclick = load;
 
-load();
+(async () => {
+  await initAuth();
+  renderLoginStatusBar(document.getElementById("userStatusBar"));
+  applyPermissionGuards();
+  await load();
+})();

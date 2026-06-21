@@ -6,6 +6,7 @@ import { initInventory } from "./inventory.js";
 import { initReturns } from "./returns.js";
 import { initRepairs } from "./repairs.js";
 import { initQrCodeFeatures } from "./qrcode-label.js";
+import { initAuth, renderLoginStatusBar, applyPermissionGuards, can } from "./auth.js";
 
 const createForm = document.querySelector('#createForm');
 const actionForm = document.querySelector('#actionForm');
@@ -161,6 +162,7 @@ function render() {
   });
 
   bindMaintenanceEvents(api, load);
+  applyPermissionGuards();
 }
 
 function cardHtml(item) {
@@ -178,9 +180,9 @@ function cardHtml(item) {
 
   return '<article class="card"><h3>' + (item.code || item.id) + '</h3><span class="pill">' + item.status + '</span>' +
     main + tasks +
-    '<label>状态</label><select data-status="' + (item.id || item.code) + '">' +
+    '<label>状态</label><select data-status="' + (item.id || item.code) + '" data-perm="update_item_status">' +
     stages.map(s => '<option ' + (s === item.status ? 'selected' : '') + '>' + s + '</option>').join('') +
-    '</select><button class="secondary" data-note="' + (item.id || item.code) + '">追加备注</button>' +
+    '</select><button class="secondary" data-note="' + (item.id || item.code) + '" data-perm="add_log">追加备注</button>' +
     '<button class="secondary qr-btn" data-qrcode="' + (item.id || item.code) + '">二维码标签</button>' +
     planHtml +
     '<div class="logs meta">' + (logs || '暂无记录') + '</div></article>';
@@ -261,4 +263,9 @@ document.querySelector('#reload').onclick = load;
 renderForms();
 initImport(api, load);
 initQrCodeFeatures(api, load);
-load();
+(async () => {
+  await initAuth();
+  renderLoginStatusBar(document.getElementById("userStatusBar"));
+  applyPermissionGuards();
+  await load();
+})();

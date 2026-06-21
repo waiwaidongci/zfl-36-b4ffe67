@@ -733,3 +733,179 @@ button.small {
   .report-summary-grid { grid-template-columns: repeat(2, 1fr); }
   .report-table-wrap { overflow-x: auto; }
 }
+
+.login-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #e8ede4 0%, #d4ddd0 100%);
+}
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+.login-header {
+  padding: 32px 28px 20px;
+  text-align: center;
+  background: linear-gradient(135deg, #526f43 0%, #6b8a5b 100%);
+  color: #fff;
+}
+.login-header h1 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+.login-header .login-subtitle {
+  font-size: 13px;
+  opacity: 0.85;
+}
+.login-body {
+  padding: 28px;
+}
+.login-error {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin-bottom: 16px;
+  display: none;
+}
+.login-tips {
+  margin-top: 20px;
+  padding: 14px;
+  background: #f8f9f6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.login-tips strong {
+  color: var(--ink);
+  display: block;
+  margin-bottom: 6px;
+}
+.login-tips code {
+  background: #fff;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  font-size: 12px;
+  color: #526f43;
+  font-family: monospace;
+}
+
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+.modal-mask.active {
+  display: flex;
+}
+.modal-box {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--line);
+}
+.modal-header h3 {
+  margin: 0;
+  font-size: 17px;
+}
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 22px;
+  padding: 0 6px;
+  cursor: pointer;
+  line-height: 1;
+}
+.modal-close:hover {
+  color: var(--ink);
+}
+.modal-body {
+  padding: 24px;
+}
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+button.danger {
+  background: var(--warn);
+}
+button.info {
+  background: var(--info);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th,
+.data-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.data-table th {
+  background: #f6f8f4;
+  font-weight: 700;
+  color: var(--ink);
+  position: sticky;
+  top: 0;
+}
+.data-table tbody tr:hover {
+  background: #fafbf9;
+}
+.data-table td .danger-btn {
+  background: var(--warn);
+}
+
+.nav-btn {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 13px;
+}
+.nav-btn:hover {
+  opacity: 0.9;
+}
+
+.hint-text {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+

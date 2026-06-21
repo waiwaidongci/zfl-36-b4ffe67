@@ -1,3 +1,5 @@
+import { applyPermissionGuards } from "./auth.js";
+
 export const returnFields = [
   ["returner", "归还人", "text"],
   ["returnDate", "实际归还日期", "date"],
@@ -32,7 +34,7 @@ export function renderReturnFormHtml(borrowedItems) {
           <input type="checkbox" name="needRepair">
           <span>需要修补（勾选后状态将变为"需修补"）</span>
         </label>
-        <button type="submit" ${borrowedItems.length ? "" : "disabled"}>提交归还</button>
+        <button type="submit" ${borrowedItems.length ? "" : "disabled"} data-perm="return_item">提交归还</button>
       </form>
       <div id="returnHistory" class="return-history" style="margin-top:16px;"></div>
     </div>`;
@@ -79,6 +81,7 @@ export async function initReturns(api, loadCallback) {
         <div style="margin-top:16px;">${renderReturnHistoryHtml(returns).replace(/^<h3[^>]*>.*?<\/h3>/, "")}</div>
       `;
       bindReturnEvents(api, loadCallback, refreshReturnPanel, borrowed);
+      applyPermissionGuards();
     } catch (e) {
       console.error("加载归还数据失败", e);
     }

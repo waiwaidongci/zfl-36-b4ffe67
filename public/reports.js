@@ -1,3 +1,5 @@
+import { initAuth, renderLoginStatusBar, applyPermissionGuards, can } from "./auth.js";
+
 let reportData = { summary: null, items: [] };
 
 async function api(path, options) {
@@ -113,6 +115,7 @@ async function loadReport() {
 
     renderSummary(data.summary);
     renderItems(data.items);
+    applyPermissionGuards();
   } catch (e) {
     document.getElementById('reportSummary').innerHTML = '<div class="error">加载失败：' + e.message + '</div>';
     document.getElementById('reportItems').innerHTML = '<div class="error">加载失败：' + e.message + '</div>';
@@ -165,4 +168,9 @@ document.querySelectorAll('.quick-btn').forEach(btn => {
   document.getElementById('endDate').value = end.toISOString().slice(0, 10);
 })();
 
-loadReport();
+(async () => {
+  await initAuth();
+  renderLoginStatusBar(document.getElementById("userStatusBar"));
+  applyPermissionGuards();
+  await loadReport();
+})();

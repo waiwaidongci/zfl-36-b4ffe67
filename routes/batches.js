@@ -1,4 +1,6 @@
 import { loadDb, saveDb, body, send, newBatchId } from "../db.js";
+import { requirePermission } from "./auth.js";
+import { PERMISSIONS } from "../services/auth.js";
 
 function findBatch(db, id) {
   return db.borrowBatches.find(b => b.id === id);
@@ -51,6 +53,8 @@ export async function handleBatches(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/batches") {
+    const user = await requirePermission(req, res, PERMISSIONS.CREATE_BATCH);
+    if (!user) return;
     const input = await body(req);
     const itemIds = Array.isArray(input.itemIds) ? input.itemIds : [];
     const eventName = input.eventName || "演示活动";
@@ -100,7 +104,7 @@ export async function handleBatches(req, res, url) {
       createdAt: now,
       itemIds: validItems.map(i => i.id || i.code),
       logs: [
-        { at: now, step: "创建批次", note: `创建${eventName}演示借用批次，含${validItems.length}件道具` }
+        { at: now, step: "创建批次", note: `创建${eventName}演示借用批次，含${validItems.length}件道具（${user.displayName}）` }
       ]
     };
 
@@ -115,7 +119,7 @@ export async function handleBatches(req, res, url) {
       });
       item.status = "已借出";
       item.logs ||= [];
-      item.logs.push({ at: now, step: "借用", note: eventName + " · " + borrower + "（批次）" });
+      item.logs.push({ at: now, step: "借用", note: eventName + " · " + borrower + "（批次）（" + user.displayName + "）" });
     }
 
     db.borrowBatches.unshift(batch);
@@ -132,6 +136,8 @@ export async function handleBatches(req, res, url) {
 
   const patch = url.pathname.match(/^\/api\/batches\/([^/]+)$/);
   if (patch && req.method === "PATCH") {
+    const user = await requirePermission(req, res, PERMISSIONS.UPDATE_BATCH);
+    if (!user) return;
     const batch = findBatch(db, patch[1]);
     if (!batch) return send(res, 404, { error: "batch_not_found" });
     const input = await body(req);
@@ -140,18 +146,20 @@ export async function handleBatches(req, res, url) {
       if (input[f] !== undefined) batch[f] = input[f];
     }
     batch.logs ||= [];
-    batch.logs.push({ at: new Date().toISOString(), step: "更新批次", note: "修改批次信息" });
+    batch.logs.push({ at: new Date().toISOString(), step: "更新批次", note: "修改批次信息（" + user.displayName + "）" });
     await saveDb(db);
     return send(res, 200, summarizeBatch(batch, db));
   }
 
   const log = url.pathname.match(/^\/api\/batches\/([^/]+)\/logs$/);
   if (log && req.method === "POST") {
+    const user = await requirePermission(req, res, PERMISSIONS.ADD_BATCH_LOG);
+    if (!user) return;
     const batch = findBatch(db, log[1]);
     if (!batch) return send(res, 404, { error: "batch_not_found" });
     const input = await body(req);
     batch.logs ||= [];
-    batch.logs.push({ at: new Date().toISOString(), step: input.step || "备注", note: input.note || "" });
+    batch.logs.push({ at: new Date().toISOString(), step: input.step || "备注", note: (input.note || "") + "（" + user.displayName + "）" });
     await saveDb(db);
     return send(res, 201, summarizeBatch(batch, db));
   }

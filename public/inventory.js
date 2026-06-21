@@ -1,3 +1,5 @@
+import { initAuth, renderLoginStatusBar, applyPermissionGuards, can } from "./auth.js";
+
 let locationGroups = [];
 
 export function initInventory(api, loadCallback) {
@@ -30,7 +32,7 @@ function renderInventorySection(api, loadCallback) {
   html += '<div><label>盘点人</label><input name="person" id="invPerson" placeholder="盘点人姓名"></div>';
   html += '</div>';
   html += '<label>异常说明</label><textarea name="notes" id="invNotes" placeholder="如无异常可留空"></textarea>';
-  html += '<button type="submit">提交盘点记录</button>';
+  html += '<button type="submit" data-perm="create_inventory">提交盘点记录</button>';
   html += '</form>';
 
   html += '<div class="inventory-groups">';
@@ -109,7 +111,7 @@ function renderInventorySection(api, loadCallback) {
           for (const r of records) {
             rh += '<div class="inv-history-item">';
             rh += '<div class="inv-history-row"><strong>' + escapeHtml(r.date) + '</strong> · ' + escapeHtml(r.person);
-            rh += ' <button class="inv-del-btn" data-del="' + r.id + '">删除</button>';
+            rh += ' <button class="inv-del-btn" data-del="' + r.id + '" data-perm="delete_inventory">删除</button>';
             rh += '</div>';
             if (r.notes) rh += '<div class="inv-history-notes">' + escapeHtml(r.notes) + '</div>';
             rh += '</div>';
@@ -131,12 +133,14 @@ function renderInventorySection(api, loadCallback) {
             }
           };
         });
+        applyPermissionGuards();
       } catch (err) {
         historyEl.innerHTML = '<div class="warn">加载失败</div>';
         historyEl.style.display = 'block';
       }
     };
   });
+  applyPermissionGuards();
 }
 
 function escapeHtml(text) {
