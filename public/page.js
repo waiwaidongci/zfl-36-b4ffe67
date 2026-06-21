@@ -88,6 +88,7 @@ CP-101,木桨,划船演示,老杉木,器具架B
     <section>
       <div class="stats" id="stats"></div>
       <div id="reminders" class="reminders"></div>
+      <div id="inventorySection" class="panel inventory-section"></div>
       <div class="toolbar"><select id="statusFilter"><option value="">全部状态</option>${stageOptions}</select><input id="search" placeholder="搜索编号或关键词"></div>
       <div class="panel"><h2>新增道具后可创建外出演示借用单，随后登记归还或维护备注。</h2><div class="grid" id="cards"></div></div>
     </section>

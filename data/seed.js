@@ -58,5 +58,21 @@ export const seed = {
         { at: "2026-06-10", step: "检查", note: "网眼需观察" }
       ]
     }
+  ],
+  inventories: [
+    {
+      id: "INV-001",
+      location: "东柜二层",
+      date: "2026-06-01",
+      person: "张师傅",
+      notes: "鸬鹚绳环轻微起毛，需关注"
+    },
+    {
+      id: "INV-002",
+      location: "器具架A",
+      date: "2026-05-30",
+      person: "李工",
+      notes: "竹篓底圈松动已记录"
+    }
   ]
 };
