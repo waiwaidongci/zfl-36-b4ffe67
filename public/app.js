@@ -3,6 +3,7 @@ import { renderPlanHtml, bindMaintenanceEvents } from "./maintenance.js";
 import { loadReminders } from "./reminders.js";
 import { initImport } from "./import.js";
 import { initInventory } from "./inventory.js";
+import { initReturns } from "./returns.js";
 
 const createForm = document.querySelector('#createForm');
 const actionForm = document.querySelector('#actionForm');
@@ -89,6 +90,7 @@ async function load() {
   render();
   await loadReminders(api, remindersEl);
   initInventory(api, load);
+  initReturns(api, load);
 }
 
 createForm.onsubmit = async event => {

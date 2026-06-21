@@ -26,6 +26,7 @@ export function renderPage() {
     <section>
       <form id="createForm"><h2>新增道具</h2><div id="fields"></div><label>初始状态</label><select name="status">${stageOptions}</select><button>保存道具</button></form>
       <form id="actionForm" style="margin-top:14px"><h2>创建演示借用单</h2><label>选择道具</label><select name="id" id="itemSelect"></select><div id="extraFields"></div><button>提交记录</button></form>
+      <div class="panel" id="returnPanel" style="margin-top:14px"><h2>归还登记</h2><div class="meta">加载中...</div></div>
       <div class="panel" id="importPanel" style="margin-top:14px">
         <h2>批量导入道具</h2>
         <details id="importHelp" class="import-help">

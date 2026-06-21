@@ -4,6 +4,7 @@ import { handleItems } from "./routes/items.js";
 import { handleMaintenance } from "./routes/maintenance.js";
 import { handleImport } from "./routes/import.js";
 import { handleInventory } from "./routes/inventory.js";
+import { handleReturns } from "./routes/returns.js";
 import { renderPage, serveStatic } from "./public/page.js";
 
 const port = Number(process.env.PORT || 3036);
@@ -29,6 +30,9 @@ const server = http.createServer(async (req, res) => {
 
     const inventoryResult = await handleInventory(req, res, url);
     if (inventoryResult !== null) return;
+
+    const returnResult = await handleReturns(req, res, url);
+    if (returnResult !== null) return;
 
     send(res, 404, { error: "not_found" });
   } catch (error) {

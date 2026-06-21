@@ -14,7 +14,34 @@
         "type": "定期保养",
         "responsible": "张师傅"
       },
+      "borrowings": [
+        {
+          "at": "2026-06-01T09:00:00.000Z",
+          "borrower": "王演示",
+          "eventName": "古镇文化节",
+          "dueDate": "2026-06-03"
+        }
+      ],
+      "returns": [
+        {
+          "id": "CP-RET-1717382400000",
+          "returnDate": "2026-06-03",
+          "returner": "王演示",
+          "wearChange": "内侧轻微起毛",
+          "needRepair": false
+        }
+      ],
       "logs": [
+        {
+          "at": "2026-06-01T09:00:00.000Z",
+          "step": "借用",
+          "note": "古镇文化节 · 王演示"
+        },
+        {
+          "at": "2026-06-03T16:00:00.000Z",
+          "step": "归还",
+          "note": "归还人：王演示 · 归还日期：2026-06-03 · 磨损变化：内侧轻微起毛 · 检查结果：可借用"
+        },
         {
           "at": "2026-06-05",
           "step": "维护",
@@ -36,11 +63,38 @@
         "type": "修补加固",
         "responsible": "李工"
       },
+      "borrowings": [
+        {
+          "at": "2026-06-10T10:00:00.000Z",
+          "borrower": "李展示",
+          "eventName": "非遗传承人活动",
+          "dueDate": "2026-06-12"
+        }
+      ],
+      "returns": [
+        {
+          "id": "CP-RET-1718150400000",
+          "returnDate": "2026-06-12",
+          "returner": "李展示",
+          "wearChange": "底圈松动加重",
+          "needRepair": true
+        }
+      ],
       "logs": [
         {
           "at": "2026-05-28",
           "step": "检查",
           "note": "底圈需补扎"
+        },
+        {
+          "at": "2026-06-10T10:00:00.000Z",
+          "step": "借用",
+          "note": "非遗传承人活动 · 李展示"
+        },
+        {
+          "at": "2026-06-12T17:00:00.000Z",
+          "step": "归还",
+          "note": "归还人：李展示 · 归还日期：2026-06-12 · 磨损变化：底圈松动加重 · 检查结果：需修补"
         }
       ]
     },
@@ -52,17 +106,87 @@
       "wear": "网眼轻微变形",
       "location": "西柜一层",
       "lastMaintenance": "2026-06-10",
-      "status": "可借用",
+      "status": "已借出",
       "maintenancePlan": {
         "nextDate": "2026-08-10",
         "type": "检查更换",
         "responsible": "王队长"
       },
+      "borrowings": [
+        {
+          "at": "2026-06-18T08:30:00.000Z",
+          "borrower": "赵演员",
+          "eventName": "民俗馆开馆仪式",
+          "dueDate": "2026-06-22"
+        }
+      ],
       "logs": [
         {
           "at": "2026-06-10",
           "step": "检查",
           "note": "网眼需观察"
+        },
+        {
+          "at": "2026-06-18T08:30:00.000Z",
+          "step": "借用",
+          "note": "民俗馆开馆仪式 · 赵演员"
+        }
+      ]
+    },
+    {
+      "code": "CP-004",
+      "name": "木船桨",
+      "purpose": "划船演示",
+      "material": "老杉木",
+      "wear": "握柄处光滑",
+      "location": "器具架B",
+      "lastMaintenance": "2026-06-02",
+      "status": "已借出",
+      "maintenancePlan": {
+        "nextDate": "2026-07-02",
+        "type": "定期保养",
+        "responsible": "张师傅"
+      },
+      "borrowings": [
+        {
+          "at": "2026-06-19T09:00:00.000Z",
+          "borrower": "钱船员",
+          "eventName": "水乡风情展演",
+          "dueDate": "2026-06-23"
+        }
+      ],
+      "logs": [
+        {
+          "at": "2026-06-02",
+          "step": "维护",
+          "note": "桨叶打磨上漆"
+        },
+        {
+          "at": "2026-06-19T09:00:00.000Z",
+          "step": "借用",
+          "note": "水乡风情展演 · 钱船员"
+        }
+      ]
+    },
+    {
+      "code": "CP-005",
+      "name": "鸬鹚脚环",
+      "purpose": "标识识别",
+      "material": "铝合金",
+      "wear": "无",
+      "location": "工具盒A",
+      "lastMaintenance": "2026-05-20",
+      "status": "可借用",
+      "maintenancePlan": {
+        "nextDate": "2026-08-20",
+        "type": "检查更换",
+        "responsible": "王队长"
+      },
+      "logs": [
+        {
+          "at": "2026-05-20",
+          "step": "检查",
+          "note": "脚环完好"
         }
       ]
     }
@@ -81,13 +205,6 @@
       "date": "2026-05-30",
       "person": "李工",
       "notes": "竹篓底圈松动已记录"
-    },
-    {
-      "id": "CP-1782017891212",
-      "location": "西柜一层",
-      "date": "2026-06-20",
-      "person": "王队长",
-      "notes": "网眼轻微变形需持续观察"
     }
   ]
 }
