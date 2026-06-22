@@ -197,7 +197,7 @@ function renderMaintenanceList() {
   list.querySelectorAll('[data-view-item]').forEach(btn => {
     btn.onclick = () => {
       const code = btn.dataset.viewItem;
-      alert(`跳转到道具卡片：${code}\n\n（当前为演示版，完整版本会跳转至首页并定位该道具卡片）`);
+      window.location.href = '/?highlight=' + encodeURIComponent(code);
     };
   });
 

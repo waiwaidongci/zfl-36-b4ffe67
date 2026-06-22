@@ -165,6 +165,73 @@ function render() {
   applyPermissionGuards();
 }
 
+let _highlightDone = false;
+
+function triggerInitialHighlight() {
+  if (_highlightDone) return;
+  const highlightParam = new URLSearchParams(window.location.search).get('highlight');
+  if (highlightParam) {
+    highlightAndScrollToItem(highlightParam);
+  }
+}
+
+function highlightAndScrollToItem(identifier) {
+  const searchInput = document.querySelector('#search');
+  const cleanId = (identifier || '').trim();
+  if (!cleanId) return;
+
+  const target = items.find(it => it.id === cleanId || it.code === cleanId);
+  if (target) {
+    _highlightDone = true;
+    searchInput.value = cleanId;
+    const targetCode = target.code || target.id;
+
+    const visible = items.filter(item => {
+      const status = document.querySelector('#statusFilter').value;
+      const q = cleanId;
+      return (!status || item.status === status) && (!q || JSON.stringify(item).includes(q));
+    });
+    cards.innerHTML = visible.map(item => cardHtml(item)).join('');
+    document.querySelectorAll('[data-status]').forEach(sel => {
+      sel.onchange = async () => {
+        await api('/api/items/' + sel.dataset.status, { method: 'PATCH', body: JSON.stringify({ status: sel.value }) });
+        await load();
+      };
+    });
+    document.querySelectorAll('[data-note]').forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.dataset.note;
+        const note = prompt('记录备注');
+        if (note) { await api('/api/items/' + id + '/logs', { method: 'POST', body: JSON.stringify({ step: '备注', note }) }); await load(); }
+      };
+    });
+    bindMaintenanceEvents(api, load);
+    applyPermissionGuards();
+
+    setTimeout(() => {
+      const allCards = document.querySelectorAll('#cards .card');
+      let foundCard = null;
+      for (const card of allCards) {
+        const h3 = card.querySelector('h3');
+        if (h3 && h3.textContent.trim() === targetCode) {
+          foundCard = card;
+          break;
+        }
+      }
+      if (foundCard) {
+        foundCard.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        foundCard.classList.add('card-highlight');
+        setTimeout(() => {
+          foundCard.classList.add('card-highlight-active');
+        }, 100);
+        setTimeout(() => {
+          foundCard.classList.remove('card-highlight-active');
+        }, 3500);
+      }
+    }, 150);
+  }
+}
+
 function cardHtml(item) {
   const main = fields.slice(0, 4).map(([key, label]) =>
     '<div><b>' + label + '</b> ' + (item[key] ?? '') + '</div>'
@@ -191,6 +258,7 @@ function cardHtml(item) {
 async function load() {
   items = await api('/api/items');
   render();
+  triggerInitialHighlight();
   await loadReminders(api, remindersEl);
   initInventory(api, load);
   initReturns(api, load);

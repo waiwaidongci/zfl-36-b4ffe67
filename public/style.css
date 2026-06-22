@@ -1540,3 +1540,25 @@ button.small {
   }
 }
 
+.card-highlight {
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.4);
+  border-color: #d97706;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  position: relative;
+}
+
+.card-highlight-active {
+  animation: cardPulse 1.6s ease-in-out 2;
+}
+
+@keyframes cardPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(217, 119, 6, 0.15), 0 0 20px rgba(217, 119, 6, 0.3);
+    transform: scale(1.015);
+  }
+}
+
