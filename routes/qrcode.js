@@ -1,6 +1,6 @@
 import { loadDb, saveDb, body, send } from "../db.js";
 import { getCurrentUser, requirePermission } from "./auth.js";
-import { PERMISSIONS } from "../services/auth.js";
+import { PERMISSIONS, hasPermission } from "../services/auth.js";
 
 export async function handleQrcode(req, res, url) {
   const db = await loadDb();
@@ -24,6 +24,7 @@ export async function handleQrcode(req, res, url) {
     const recentChecks = (item.checks || []).slice(-5).reverse();
 
     const user = await getCurrentUser(req);
+    const canCheck = !!user && hasPermission(db, user.role, PERMISSIONS.SUBMIT_CHECK);
 
     const result = {
       code: item.code || item.id,
@@ -39,7 +40,7 @@ export async function handleQrcode(req, res, url) {
       maintenancePlan: item.maintenancePlan || null,
       latestCheck: latestCheck,
       recentChecks: recentChecks,
-      canCheck: !!user
+      canCheck: canCheck
     };
 
     return send(res, 200, result);
@@ -47,7 +48,7 @@ export async function handleQrcode(req, res, url) {
 
   const checkMatch = url.pathname.match(/^\/api\/qrcode\/([^/]+)\/check$/);
   if (checkMatch && req.method === "POST") {
-    const user = await requirePermission(req, res, PERMISSIONS.ADD_LOG);
+    const user = await requirePermission(req, res, PERMISSIONS.SUBMIT_CHECK);
     if (!user) return;
 
     const identifier = checkMatch[1];

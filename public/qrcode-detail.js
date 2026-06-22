@@ -111,7 +111,7 @@ function renderItemDetail(item) {
   const content = document.getElementById('qrcodeDetailContent');
   const statusClass = getStatusClass(item.status);
   const loggedIn = isLoggedIn();
-  const hasPermission = loggedIn && can(PERMISSIONS.ADD_LOG);
+  const hasPermission = loggedIn && item.canCheck === true;
 
   let borrowingHtml = '';
   if (item.currentBorrowing) {
