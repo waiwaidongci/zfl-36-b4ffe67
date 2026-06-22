@@ -113,6 +113,12 @@ export function generateItemStats(db, startDate, endDate) {
 
     const repairCount = repairOrderCount + logRepairCount;
 
+    const checkCount = (item.checks || []).filter(c =>
+      isInDateRange(c.at, startDate, endDate)
+    ).length;
+
+    const latestCheck = (item.checks || []).slice(-1)[0] || null;
+
     let overdueCount = 0;
     const now = new Date();
     const returns = item.returns || [];
@@ -142,10 +148,24 @@ export function generateItemStats(db, startDate, endDate) {
       status: item.status,
       borrowCount,
       repairCount,
+      checkCount,
+      latestCheck,
       overdueCount,
       isAvailable: item.status === "可借用"
     };
   });
+}
+
+export function calculateCheckCount(db, startDate, endDate) {
+  let count = 0;
+  for (const item of db.items || []) {
+    for (const c of item.checks || []) {
+      if (isInDateRange(c.at, startDate, endDate)) {
+        count++;
+      }
+    }
+  }
+  return count;
 }
 
 export function getReportSummary(db, startDate, endDate) {
@@ -156,6 +176,7 @@ export function getReportSummary(db, startDate, endDate) {
     borrowCount: calculateBorrowCount(db, startDate, endDate),
     overdueCount: calculateOverdueCount(db, startDate, endDate),
     repairCount: calculateRepairCount(db, startDate, endDate),
+    checkCount: calculateCheckCount(db, startDate, endDate),
     availableRate: calculateAvailableRate(db),
     generatedAt: new Date().toISOString()
   };
@@ -374,18 +395,27 @@ export function generateCSV(report) {
     "借用次数",
     "逾期次数",
     "修补次数",
+    "核验次数",
+    "最近核验时间",
+    "最近核验结果",
     "是否可借用"
   ];
 
-  const rows = report.items.map(item => [
-    item.code || item.id,
-    item.name,
-    item.status,
-    item.borrowCount,
-    item.overdueCount,
-    item.repairCount,
-    item.isAvailable ? "是" : "否"
-  ]);
+  const rows = report.items.map(item => {
+    const latestCheck = item.latestCheck;
+    return [
+      item.code || item.id,
+      item.name,
+      item.status,
+      item.borrowCount,
+      item.overdueCount,
+      item.repairCount,
+      item.checkCount || 0,
+      latestCheck ? new Date(latestCheck.at).toLocaleString("zh-CN") : "",
+      latestCheck ? latestCheck.checkResult + (latestCheck.operator ? "（" + latestCheck.operator + "）" : "") : "",
+      item.isAvailable ? "是" : "否"
+    ];
+  });
 
   const summaryRows = [
     [],
@@ -395,6 +425,7 @@ export function generateCSV(report) {
     ["借用总次数", report.summary.borrowCount],
     ["逾期未归还数", report.summary.overdueCount],
     ["修补总次数", report.summary.repairCount],
+    ["核验总次数", report.summary.checkCount || 0],
     ["可借用率", report.summary.availableRate + "%"],
     ["生成时间", new Date(report.summary.generatedAt).toLocaleString("zh-CN")]
   ];

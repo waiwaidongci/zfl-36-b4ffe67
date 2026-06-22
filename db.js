@@ -203,5 +203,7 @@ export function newUserId() {
 
 export function summarize(item) {
   const logCount = (item.logs || []).length + (item.tasks || []).reduce((n, t) => n + (t.logs || []).length, 0);
-  return { ...item, logCount };
+  const latestCheck = (item.checks || []).slice(-1)[0] || null;
+  const checkCount = (item.checks || []).length;
+  return { ...item, logCount, latestCheck, checkCount };
 }

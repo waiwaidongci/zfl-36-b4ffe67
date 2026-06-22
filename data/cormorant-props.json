@@ -119,10 +119,29 @@
           "at": "2026-06-18T17:30:00.000Z",
           "step": "归还",
           "note": "归还人：赵演员 · 归还日期：2026-06-18"
+        },
+        {
+          "at": "2026-06-22T05:49:49.390Z",
+          "step": "核验",
+          "note": "核验结果：正常 · 实际存放点：东柜二层 · 磨损情况：内侧轻微起毛（系统管理员）"
         }
       ],
       "id": "CP-001",
-      "tasks": []
+      "tasks": [],
+      "checks": [
+        {
+          "id": "CHECK-1782107389390",
+          "at": "2026-06-22T05:49:49.390Z",
+          "operator": "系统管理员",
+          "operatorId": "USER-DEFAULT-ADMIN",
+          "checkResult": "正常",
+          "actualLocation": "东柜二层",
+          "wearNote": "内侧轻微起毛",
+          "needRepair": false,
+          "originalLocation": "东柜二层",
+          "originalStatus": "可借用"
+        }
+      ]
     },
     {
       "code": "CP-002",
@@ -557,10 +576,10 @@
       "name": "鸬鹚站架",
       "purpose": "展示站立",
       "material": "实木",
-      "wear": "表面划痕",
-      "location": "西柜二层",
+      "wear": "表面划痕加深",
+      "location": "西柜二层新位置",
       "lastMaintenance": "2026-06-01",
-      "status": "可借用",
+      "status": "需修补",
       "maintenancePlan": {
         "nextDate": "2026-09-01",
         "type": "定期保养",
@@ -599,10 +618,29 @@
           "at": "2026-06-01",
           "step": "维护",
           "note": "上蜡保养"
+        },
+        {
+          "at": "2026-06-22T05:49:49.398Z",
+          "step": "核验",
+          "note": "核验结果：需修补 · 实际存放点：西柜二层新位置 · 磨损情况：表面划痕加深 · 需要修补（系统管理员）"
         }
       ],
       "id": "CP-007",
-      "tasks": []
+      "tasks": [],
+      "checks": [
+        {
+          "id": "CHECK-1782107389398",
+          "at": "2026-06-22T05:49:49.398Z",
+          "operator": "系统管理员",
+          "operatorId": "USER-DEFAULT-ADMIN",
+          "checkResult": "需修补",
+          "actualLocation": "西柜二层新位置",
+          "wearNote": "表面划痕加深",
+          "needRepair": true,
+          "originalLocation": "西柜二层",
+          "originalStatus": "可借用"
+        }
+      ]
     },
     {
       "code": "CP-008",
@@ -1008,7 +1046,7 @@
       "role": "admin",
       "createdAt": "2026-01-01T00:00:00.000Z",
       "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
-      "lastLoginAt": "2026-06-21T10:22:53.815Z"
+      "lastLoginAt": "2026-06-22T05:49:49.381Z"
     },
     {
       "id": "USER-DEFAULT-MAINTAINER",
@@ -1027,7 +1065,14 @@
       "passwordHash": "656d604dfdba41a262963cce53699bbc56cd7a2c0da1ad5ead45fc49214159d6"
     }
   ],
-  "sessions": [],
+  "sessions": [
+    {
+      "token": "ff20da13b0d521cb2c2f5d48864232c9f4e73ece25b9e330f29747eab2fcfb14",
+      "userId": "USER-DEFAULT-ADMIN",
+      "createdAt": "2026-06-22T05:49:49.381Z",
+      "expiresAt": "2026-06-29T05:49:49.381Z"
+    }
+  ],
   "_migrations": [
     {
       "version": 1,

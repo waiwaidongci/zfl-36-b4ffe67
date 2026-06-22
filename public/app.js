@@ -232,6 +232,32 @@ function highlightAndScrollToItem(identifier) {
   }
 }
 
+function formatCardDateTime(dateStr) {
+  if (!dateStr) return '-';
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+function getCheckBadgeClass(result) {
+  switch (result) {
+    case '正常': return 'check-badge-ok';
+    case '存放异常': return 'check-badge-warn';
+    case '状态异常': return 'check-badge-warn';
+    case '需修补': return 'check-badge-danger';
+    case '已借出中': return 'check-badge-info';
+    default: return '';
+  }
+}
+
 function cardHtml(item) {
   const main = fields.slice(0, 4).map(([key, label]) =>
     '<div><b>' + label + '</b> ' + (item[key] ?? '') + '</div>'
@@ -245,8 +271,25 @@ function cardHtml(item) {
 
   const planHtml = renderPlanHtml(item);
 
+  let checkHtml = '';
+  if (item.latestCheck) {
+    const c = item.latestCheck;
+    const badgeClass = getCheckBadgeClass(c.checkResult);
+    checkHtml = `
+      <div class="card-check-info">
+        <span class="meta">最近核验：</span>
+        <span class="check-badge-small ${badgeClass}">${c.checkResult}</span>
+        <span class="meta">${formatCardDateTime(c.at)}</span>
+        ${c.operator ? `<span class="meta">· ${c.operator}</span>` : ''}
+        ${c.needRepair ? '<span class="meta" style="color:#c62828">⚠️需修补</span>' : ''}
+      </div>
+    `;
+  } else if (item.checkCount > 0) {
+    checkHtml = `<div class="card-check-info meta">核验次数：${item.checkCount}</div>`;
+  }
+
   return '<article class="card"><h3>' + (item.code || item.id) + '</h3><span class="pill">' + item.status + '</span>' +
-    main + tasks +
+    main + tasks + checkHtml +
     '<label>状态</label><select data-status="' + (item.id || item.code) + '" data-perm="update_item_status">' +
     stages.map(s => '<option ' + (s === item.status ? 'selected' : '') + '>' + s + '</option>').join('') +
     '</select><button class="secondary" data-note="' + (item.id || item.code) + '" data-perm="add_log">追加备注</button>' +

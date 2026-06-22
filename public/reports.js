@@ -40,6 +40,10 @@ function renderSummary(summary) {
         <strong class="ok">${summary.borrowCount}</strong>
       </div>
       <div class="summary-card">
+        <span>核验次数</span>
+        <strong style="color:#558b2f">${summary.checkCount || 0}</strong>
+      </div>
+      <div class="summary-card">
         <span>逾期未归还</span>
         <strong class="warn">${summary.overdueCount}</strong>
       </div>
@@ -57,6 +61,32 @@ function renderSummary(summary) {
       · 生成时间：${new Date(summary.generatedAt).toLocaleString('zh-CN')}
     </div>
   `;
+}
+
+function formatReportDateTime(dateStr) {
+  if (!dateStr) return '-';
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+function getReportCheckBadge(result) {
+  switch (result) {
+    case '正常': return '<span class="pill small ok">正常</span>';
+    case '存放异常': return '<span class="pill small" style="background:#fff3e0;color:#e65100">存放异常</span>';
+    case '状态异常': return '<span class="pill small" style="background:#fff3e0;color:#e65100">状态异常</span>';
+    case '需修补': return '<span class="pill small warn">需修补</span>';
+    case '已借出中': return '<span class="pill small" style="background:#e3f2fd;color:#1565c0">已借出中</span>';
+    default: return result ? `<span class="pill small">${result}</span>` : '-';
+  }
 }
 
 function renderItems(items) {
@@ -83,23 +113,31 @@ function renderItems(items) {
             <th>名称</th>
             <th>当前状态</th>
             <th>借用次数</th>
+            <th>核验次数</th>
+            <th>最近核验</th>
+            <th>核验结果</th>
             <th>逾期次数</th>
             <th>修补次数</th>
             <th>是否可借用</th>
           </tr>
         </thead>
         <tbody>
-          ${filtered.map(item => `
+          ${filtered.map(item => {
+            const latestCheck = item.latestCheck;
+            return `
             <tr>
               <td><strong>${item.code || item.id}</strong></td>
               <td>${item.name || ''}</td>
               <td><span class="pill small ${item.status === '可借用' ? 'ok' : item.status === '需修补' ? 'warn' : ''}">${item.status}</span></td>
               <td>${item.borrowCount}</td>
+              <td><strong>${item.checkCount || 0}</strong></td>
+              <td class="meta" style="font-size:12px">${latestCheck ? formatReportDateTime(latestCheck.at) : '-'}</td>
+              <td>${latestCheck ? getReportCheckBadge(latestCheck.checkResult) + (latestCheck.needRepair ? ' ⚠️' : '') : '-'}</td>
               <td class="${item.overdueCount > 0 ? 'warn' : ''}">${item.overdueCount}</td>
               <td>${item.repairCount}</td>
               <td>${item.isAvailable ? '<span class="pill small ok">是</span>' : '<span class="pill small warn">否</span>'}</td>
             </tr>
-          `).join('')}
+          `}).join('')}
         </tbody>
       </table>
     </div>

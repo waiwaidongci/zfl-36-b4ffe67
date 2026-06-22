@@ -23,6 +23,46 @@ button.secondary { background:#69736a; }
 .logs { border-top:1px solid var(--line); padding-top:8px; max-height:90px; overflow:auto; }
 .warn { color:var(--warn); font-weight:700; }
 
+.card-check-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  background: #f6f8f4;
+  border-radius: 6px;
+  border-left: 3px solid #8bc34a;
+  font-size: 12px;
+}
+
+.check-badge-small {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.check-badge-small.check-badge-ok {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.check-badge-small.check-badge-warn {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.check-badge-small.check-badge-danger {
+  background: #fbe9e7;
+  color: #c62828;
+}
+
+.check-badge-small.check-badge-info {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
 .reminders { margin-bottom:18px; }
 .reminders h2 { display:flex; align-items:center; gap:8px; }
 .reminder-list { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:10px; }

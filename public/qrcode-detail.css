@@ -185,6 +185,329 @@
   background: rgba(255, 255, 255, 0.7);
 }
 
+.latest-check-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: #f8f9f6;
+  border-radius: 8px;
+}
+
+.check-result-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.check-result-badge.small {
+  font-size: 11px;
+  padding: 2px 8px;
+}
+
+.check-result-badge.check-ok {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.check-result-badge.check-warn {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.check-result-badge.check-danger {
+  background: #fbe9e7;
+  color: #c62828;
+}
+
+.check-result-badge.check-info {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.check-records {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.check-record {
+  background: #f8f9f6;
+  border-radius: 8px;
+  padding: 10px 12px;
+  border-left: 3px solid #8d6e63;
+}
+
+.check-record-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.check-time {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.check-record-body {
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.check-record-body > div {
+  margin-top: 4px;
+}
+
+.check-form-section {
+  background: linear-gradient(180deg, #f5f8f0 0%, #fff 100%);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid #d7e5c6;
+}
+
+.check-form-section h3 {
+  color: #558b2f;
+  margin-bottom: 14px !important;
+}
+
+.check-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.required {
+  color: #c62828;
+}
+
+.check-form input[type="text"],
+.check-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  background: #fff;
+}
+
+.check-form input[type="text"]:focus,
+.check-form textarea:focus {
+  outline: none;
+  border-color: #8bc34a;
+  box-shadow: 0 0 0 3px rgba(139, 195, 74, 0.15);
+}
+
+.check-form textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.check-result-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.check-option {
+  flex: 1;
+  min-width: calc(50% - 4px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+  box-sizing: border-box;
+}
+
+.check-option:hover {
+  border-color: #8bc34a;
+  background: #f5f8f0;
+}
+
+.check-option input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.check-option input[type="radio"]:checked + span,
+.check-option:has(input[type="radio"]:checked) {
+  background: #e8f5e9;
+  border-color: #558b2f;
+  color: #33691e;
+  font-weight: 500;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+
+.checkbox-label:hover {
+  border-color: #ef5350;
+  background: #fff5f5;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin: 2px 0 0;
+  cursor: pointer;
+}
+
+.checkbox-label:has(input[type="checkbox"]:checked) {
+  background: #fff5f5;
+  border-color: #ef5350;
+  color: #c62828;
+}
+
+.form-actions {
+  padding-top: 4px;
+}
+
+.primary-btn {
+  width: 100%;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #558b2f, #689f38);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.primary-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #33691e, #558b2f);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(85, 139, 47, 0.3);
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-message {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: center;
+}
+
+.form-message.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.form-message.error {
+  background: #fbe9e7;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+
+.login-hint-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #e3f2fd;
+  border-radius: 12px;
+  border: 1px solid #90caf9;
+}
+
+.login-hint-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.login-hint-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.login-hint-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1565c0;
+  margin-bottom: 2px;
+}
+
+.login-hint-btn {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background: #1976d2;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.login-hint-btn:hover {
+  background: #1565c0;
+}
+
+.qrcode-detail-header .user-info {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.qrcode-detail-header .user-info .meta {
+  color: rgba(255,255,255,0.9);
+}
+
+.qrcode-detail-header .user-info .pill {
+  background: rgba(255,255,255,0.25);
+  color: #fff;
+  border: none;
+}
+
+.qrcode-detail-header .nav-btn {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.qrcode-detail-header .nav-btn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
 @media (max-width: 480px) {
   .qrcode-detail-page {
     padding: 10px;
@@ -192,5 +515,19 @@
 
   .detail-grid {
     grid-template-columns: 1fr;
+  }
+
+  .check-option {
+    min-width: 100%;
+  }
+
+  .login-hint-box {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .check-record-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
