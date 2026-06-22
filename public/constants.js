@@ -20,7 +20,7 @@ export const extraFields = [
 
 export const maintenanceTypes = ["定期保养", "修补加固", "检查更换", "深度清洁", "全面检修"];
 
-export const repairOrderStatuses = ["待处理", "处理中", "已完成", "已验收"];
+export const repairOrderStatuses = ["待处理", "处理中", "待复验", "已完成", "已验收"];
 
 export const repairOrderFields = [
   ["problemDescription", "问题描述", "textarea"],
@@ -32,3 +32,5 @@ export const repairOrderFields = [
 ];
 
 export const repairAcceptanceResults = ["合格", "不合格", "待复验"];
+
+export const repairReinspectionResults = ["复验合格", "复验不合格"];

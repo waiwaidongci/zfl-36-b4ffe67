@@ -10,10 +10,11 @@ import {
 import { seed } from "../data/seed.js";
 import { migrate_v0_to_v1 } from "./v001_to_v1.js";
 import { migrate_v1_to_v2, TARGET_SCHEMA_VERSION as V2_TARGET } from "./v002_to_v2.js";
+import { migrate_v2_to_v3, TARGET_SCHEMA_VERSION as V3_TARGET } from "./v003_to_v3.js";
 import { ensureIntegrity } from "./v001_to_v1.js";
 import { PERMISSIONS } from "../services/auth.js";
 
-const TARGET_SCHEMA_VERSION = V2_TARGET;
+const TARGET_SCHEMA_VERSION = V3_TARGET;
 
 const DEFAULT_ROLES = [
   {
@@ -36,6 +37,7 @@ const DEFAULT_ROLES = [
       PERMISSIONS.CREATE_REPAIR_ORDER,
       PERMISSIONS.UPDATE_REPAIR_ORDER,
       PERMISSIONS.COMPLETE_REPAIR_ORDER,
+      PERMISSIONS.REINSPECT_REPAIR_ORDER,
       PERMISSIONS.ADD_BATCH_LOG,
       PERMISSIONS.VIEW_BACKUPS,
       PERMISSIONS.DOWNLOAD_BACKUP
@@ -60,7 +62,8 @@ export { TARGET_SCHEMA_VERSION, ensureIntegrity };
 
 const MIGRATIONS = [
   { from: 0, to: 1, run: migrate_v0_to_v1 },
-  { from: 1, to: 2, run: migrate_v1_to_v2 }
+  { from: 1, to: 2, run: migrate_v1_to_v2 },
+  { from: 2, to: 3, run: migrate_v2_to_v3 }
 ];
 
 export function getMigrations() {
@@ -120,6 +123,7 @@ export async function loadAndMigrate() {
     };
     migrate_v0_to_v1(seeded);
     migrate_v1_to_v2(seeded);
+    migrate_v2_to_v3(seeded);
     await writeDatabase(ROOT_DIR, seeded);
     return {
       fresh: true,

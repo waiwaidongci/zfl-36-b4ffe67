@@ -1,5 +1,5 @@
 import { loadDb, saveDb, body, send, newId } from "../db.js";
-import { repairAcceptanceResults } from "../public/constants.js";
+import { repairAcceptanceResults, repairReinspectionResults } from "../public/constants.js";
 import { requirePermission } from "./auth.js";
 import { PERMISSIONS } from "../services/auth.js";
 
@@ -63,6 +63,22 @@ export async function handleRepairs(req, res, url) {
       materialConsumption: input.materialConsumption || "",
       completionDate: "",
       acceptanceResult: "",
+      currentRound: 1,
+      rounds: [
+        {
+          round: 1,
+          processingSteps: "",
+          materialConsumption: "",
+          completionDate: "",
+          acceptanceResult: "",
+          acceptanceDate: "",
+          acceptedBy: "",
+          reinspectionResult: "",
+          reinspectionDate: "",
+          reinspectedBy: "",
+          note: ""
+        }
+      ],
       logs: [
         {
           at: new Date().toISOString(),
@@ -158,26 +174,55 @@ export async function handleRepairs(req, res, url) {
       return send(res, 400, { error: "processing_steps_required", message: "处理步骤为必填项" });
     }
 
+    order.rounds ||= [];
+    if (order.rounds.length === 0) {
+      order.rounds.push({
+        round: 1,
+        processingSteps: "",
+        materialConsumption: "",
+        completionDate: "",
+        acceptanceResult: "",
+        acceptanceDate: "",
+        acceptedBy: "",
+        reinspectionResult: "",
+        reinspectionDate: "",
+        reinspectedBy: "",
+        note: ""
+      });
+    }
+    if (typeof order.currentRound !== "number") {
+      order.currentRound = 1;
+    }
+
+    const currentRound = order.rounds.find(r => r.round === order.currentRound) || order.rounds[order.rounds.length - 1];
+    currentRound.processingSteps = processingSteps;
+    currentRound.materialConsumption = input.materialConsumption !== undefined ? input.materialConsumption : (order.materialConsumption || "");
+    currentRound.completionDate = input.completionDate || today;
+    currentRound.acceptanceResult = acceptanceResult;
+    currentRound.acceptanceDate = input.completionDate || today;
+    currentRound.acceptedBy = user.displayName;
+
     const oldStatus = order.status;
-    order.status = "已完成";
+    const newStatus = acceptanceResult === "待复验" ? "待复验" : "已完成";
+    order.status = newStatus;
     order.completionDate = input.completionDate || today;
     order.processingSteps = input.processingSteps !== undefined ? input.processingSteps : order.processingSteps;
     order.materialConsumption = input.materialConsumption !== undefined ? input.materialConsumption : order.materialConsumption;
     order.acceptanceResult = acceptanceResult;
 
     order.logs ||= [];
-    if (oldStatus !== "已完成") {
+    if (oldStatus !== newStatus) {
       order.logs.push({
         at: new Date().toISOString(),
         step: "状态变更",
-        note: "状态从「" + oldStatus + "」更新为「已完成」（" + user.displayName + "）"
+        note: "状态从「" + oldStatus + "」更新为「" + newStatus + "」（" + user.displayName + "）"
       });
     }
     order.logs.push({
       at: new Date().toISOString(),
       step: "完成",
-      note: "修补完成，处理步骤：" + (processingSteps || "未填写") +
-        "；材料消耗：" + (order.materialConsumption || "未填写") +
+      note: "第" + order.currentRound + "轮修补完成，处理步骤：" + (processingSteps || "未填写") +
+        "；材料消耗：" + (currentRound.materialConsumption || "未填写") +
         "；验收结果：" + acceptanceResult + "（" + user.displayName + "）"
     });
 
@@ -185,7 +230,9 @@ export async function handleRepairs(req, res, url) {
     let itemUpdated = null;
     if (item) {
       const oldItemStatus = item.status;
-      if (acceptanceResult === "不合格") {
+      if (acceptanceResult === "待复验") {
+        item.status = "需修补";
+      } else if (acceptanceResult === "不合格") {
         item.status = "需修补";
       } else {
         item.status = "可借用";
@@ -202,8 +249,8 @@ export async function handleRepairs(req, res, url) {
       item.logs.push({
         at: new Date().toISOString(),
         step: "维护",
-        note: "修补工单（" + order.id + "）完成：" + processingSteps +
-          "；材料消耗：" + (order.materialConsumption || "未填写") +
+        note: "修补工单（" + order.id + "）第" + order.currentRound + "轮完成：" + processingSteps +
+          "；材料消耗：" + (currentRound.materialConsumption || "未填写") +
           "；验收结果：" + acceptanceResult + "（" + user.displayName + "）"
       });
       itemUpdated = item;
@@ -211,6 +258,145 @@ export async function handleRepairs(req, res, url) {
 
     await saveDb(db);
     return send(res, 200, { order, item: itemUpdated });
+  }
+
+  if (req.method === "POST" && url.pathname.match(/^\/api\/repair-orders\/([^/]+)\/reinspect$/)) {
+    const user = await requirePermission(req, res, PERMISSIONS.REINSPECT_REPAIR_ORDER);
+    if (!user) return;
+    const match = url.pathname.match(/^\/api\/repair-orders\/([^/]+)\/reinspect$/);
+    const order = db.repairOrders.find(o => o.id === match[1]);
+    if (!order) return send(res, 404, { error: "repair_order_not_found" });
+
+    if (order.status !== "待复验") {
+      return send(res, 400, { error: "invalid_status", message: "只有状态为'待复验'的工单才能进行复验" });
+    }
+
+    const input = await body(req);
+    const today = new Date().toISOString().slice(0, 10);
+
+    const reinspectionResult = input.reinspectionResult;
+    if (!reinspectionResult) {
+      return send(res, 400, { error: "reinspection_result_required", message: "复验结果为必填项" });
+    }
+    if (!repairReinspectionResults.includes(reinspectionResult)) {
+      return send(res, 400, {
+        error: "invalid_reinspection_result",
+        message: "复验结果必须是：" + repairReinspectionResults.join("、")
+      });
+    }
+
+    const reinspectionNote = input.note || "";
+
+    order.rounds ||= [];
+    if (order.rounds.length === 0) {
+      order.rounds.push({
+        round: 1,
+        processingSteps: order.processingSteps || "",
+        materialConsumption: order.materialConsumption || "",
+        completionDate: order.completionDate || "",
+        acceptanceResult: order.acceptanceResult || "",
+        acceptanceDate: order.completionDate || "",
+        acceptedBy: "",
+        reinspectionResult: "",
+        reinspectionDate: "",
+        reinspectedBy: "",
+        note: ""
+      });
+    }
+    if (typeof order.currentRound !== "number") {
+      order.currentRound = 1;
+    }
+
+    const currentRound = order.rounds.find(r => r.round === order.currentRound) || order.rounds[order.rounds.length - 1];
+    currentRound.reinspectionResult = reinspectionResult;
+    currentRound.reinspectionDate = today;
+    currentRound.reinspectedBy = user.displayName;
+    currentRound.note = reinspectionNote;
+
+    order.logs ||= [];
+    order.logs.push({
+      at: new Date().toISOString(),
+      step: "复验",
+      note: "第" + order.currentRound + "轮复验结果：" + reinspectionResult +
+        (reinspectionNote ? "；备注：" + reinspectionNote : "") +
+        "（" + user.displayName + "）"
+    });
+
+    const item = db.items.find(x => x.id === order.itemId || x.code === order.itemCode);
+    let itemUpdated = null;
+
+    if (reinspectionResult === "复验合格") {
+      const oldStatus = order.status;
+      order.status = "已验收";
+      order.logs.push({
+        at: new Date().toISOString(),
+        step: "状态变更",
+        note: "状态从「" + oldStatus + "」更新为「已验收」（" + user.displayName + "）"
+      });
+
+      if (item) {
+        const oldItemStatus = item.status;
+        item.status = "可借用";
+        item.lastMaintenance = today;
+        item.logs ||= [];
+        if (oldItemStatus !== item.status) {
+          item.logs.push({
+            at: new Date().toISOString(),
+            step: "状态",
+            note: "状态从「" + oldItemStatus + "」更新为「" + item.status + "」（复验合格）（" + user.displayName + "）"
+          });
+        }
+        item.logs.push({
+          at: new Date().toISOString(),
+          step: "维护",
+          note: "修补工单（" + order.id + "）复验合格（" + user.displayName + "）"
+        });
+        itemUpdated = item;
+      }
+    } else if (reinspectionResult === "复验不合格") {
+      const nextRound = order.currentRound + 1;
+      order.currentRound = nextRound;
+      order.rounds.push({
+        round: nextRound,
+        processingSteps: "",
+        materialConsumption: "",
+        completionDate: "",
+        acceptanceResult: "",
+        acceptanceDate: "",
+        acceptedBy: "",
+        reinspectionResult: "",
+        reinspectionDate: "",
+        reinspectedBy: "",
+        note: ""
+      });
+
+      const oldStatus = order.status;
+      order.status = "处理中";
+      order.acceptanceResult = "";
+      order.completionDate = "";
+      order.processingSteps = "";
+      order.materialConsumption = "";
+
+      order.logs.push({
+        at: new Date().toISOString(),
+        step: "状态变更",
+        note: "状态从「" + oldStatus + "」更新为「处理中」，自动开始第" + nextRound + "轮返修（" + user.displayName + "）"
+      });
+
+      if (item) {
+        item.status = "需修补";
+        item.logs ||= [];
+        item.logs.push({
+          at: new Date().toISOString(),
+          step: "维护",
+          note: "修补工单（" + order.id + "）复验不合格，开始第" + nextRound + "轮返修（" + user.displayName + "）"
+        });
+        itemUpdated = item;
+      }
+    }
+
+    await saveDb(db);
+    return send(res, 200, { order, item: itemUpdated, nextRound: order.currentRound });
   }
 
   if (req.method === "DELETE" && url.pathname.match(/^\/api\/repair-orders\/([^/]+)$/)) {
