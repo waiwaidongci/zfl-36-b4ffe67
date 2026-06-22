@@ -73,7 +73,6 @@ export const PERMISSIONS = {
   CREATE_ITEM: "create_item",
   UPDATE_ITEM_STATUS: "update_item_status",
   ADD_LOG: "add_log",
-  SUBMIT_CHECK: "submit_check",
   BORROW_ITEM: "borrow_item",
   RETURN_ITEM: "return_item",
   SET_MAINTENANCE_PLAN: "set_maintenance_plan",
@@ -99,7 +98,6 @@ const ROLE_PERMISSIONS = {
   [ROLES.ADMIN]: Object.values(PERMISSIONS),
   [ROLES.MAINTAINER]: [
     PERMISSIONS.ADD_LOG,
-    PERMISSIONS.SUBMIT_CHECK,
     PERMISSIONS.RETURN_ITEM,
     PERMISSIONS.COMPLETE_MAINTENANCE,
     PERMISSIONS.CREATE_INVENTORY,

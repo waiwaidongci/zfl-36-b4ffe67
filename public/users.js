@@ -38,7 +38,6 @@ function getPermLabel(perm) {
     create_item: "创建道具",
     update_item_status: "更新道具状态",
     add_log: "添加日志",
-    submit_check: "提交现场核验",
     borrow_item: "借出道具",
     return_item: "归还道具",
     set_maintenance_plan: "设置维护计划",
