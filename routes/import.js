@@ -22,15 +22,12 @@ export async function handleImport(req, res, url) {
 
     const { success, errors } = parseCSV(csvText);
     const db = await loadDb();
-    const duplicates = findDuplicates(success, db.items);
+    const { fileDuplicates, dbDuplicates } = findDuplicates(success, db.items);
 
-    const dupItemsFromFile = duplicates.filter(d => d.reason === "导入数据中重复");
-    const dupItemsFromDb = duplicates.filter(d => d.reason === "编号已存在于数据库");
-
-    const duplicateCodesFromFile = new Set(dupItemsFromFile.map(d => d.code));
+    const duplicateCodesFromFile = new Set(fileDuplicates.map(d => d.code));
     const validForInsert = success.filter(item => !duplicateCodesFromFile.has(item.code));
 
-    const analyzedDuplicates = analyzeDuplicateItems(success, dupItemsFromDb, db.items);
+    const analyzedDuplicates = analyzeDuplicateItems(success, dbDuplicates, db.items, db.repairOrders || []);
     const duplicateCodesFromDb = new Set(analyzedDuplicates.map(d => d.code));
 
     const newItems = validForInsert.filter(item => !duplicateCodesFromDb.has(item.code));
@@ -40,12 +37,12 @@ export async function handleImport(req, res, url) {
       newCount: newItems.length,
       updateCount: analyzedDuplicates.filter(d => d.hasChanges).length,
       unchangedCount: analyzedDuplicates.filter(d => !d.hasChanges).length,
-      fileDuplicateCount: dupItemsFromFile.length,
-      errorCount: errors.length + dupItemsFromFile.length,
+      fileDuplicateCount: fileDuplicates.length,
+      errorCount: errors.length + fileDuplicates.length,
       newItems: newItems,
       updateItems: analyzedDuplicates,
       errors: errors,
-      fileDuplicates: dupItemsFromFile,
+      fileDuplicates: fileDuplicates,
       modes: Object.values(IMPORT_MODES)
     });
   }
