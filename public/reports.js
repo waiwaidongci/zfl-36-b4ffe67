@@ -120,6 +120,7 @@ function renderEvents(events) {
   }
 
   const totalBorrow = filtered.reduce((s, e) => s + e.borrowCount, 0);
+  const totalEvents = filtered.reduce((s, e) => s + e.eventCount, 0);
   const totalOverdue = filtered.reduce((s, e) => s + e.overdueCount, 0);
   const totalRepair = filtered.reduce((s, e) => s + e.repairCount, 0);
 
@@ -128,6 +129,10 @@ function renderEvents(events) {
       <div class="summary-card">
         <span>活动总数</span>
         <strong>${filtered.length}</strong>
+      </div>
+      <div class="summary-card">
+        <span>活动总次数</span>
+        <strong class="ok">${totalEvents}</strong>
       </div>
       <div class="summary-card">
         <span>借用总次数</span>
@@ -147,6 +152,7 @@ function renderEvents(events) {
         <thead>
           <tr>
             <th>活动名称</th>
+            <th>活动次数</th>
             <th>借用次数</th>
             <th>单道具借用</th>
             <th>批次借用</th>
@@ -160,6 +166,7 @@ function renderEvents(events) {
           ${filtered.map(ev => `
             <tr>
               <td><strong>${ev.eventName}</strong></td>
+              <td>${ev.eventCount}</td>
               <td>${ev.borrowCount}</td>
               <td>${ev.singleBorrowCount}</td>
               <td>${ev.batchBorrowCount}</td>

@@ -166,24 +166,51 @@ function normalizeEventName(name) {
   return name.trim().replace(/\s+/g, "");
 }
 
+function getDateKey(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+}
+
+function findNearestBorrowingForRepair(repairDate, borrowings) {
+  const repairTime = new Date(repairDate).getTime();
+  let nearest = null;
+  let minDiff = Infinity;
+
+  for (const b of borrowings || []) {
+    const borrowTime = new Date(b.at).getTime();
+    if (borrowTime > repairTime) continue;
+    const diff = repairTime - borrowTime;
+    if (diff < minDiff) {
+      minDiff = diff;
+      nearest = b;
+    }
+  }
+  return nearest;
+}
+
 export function generateEventStats(db, startDate, endDate) {
   const items = db.items || [];
-  const batches = db.borrowBatches || [];
   const repairOrders = db.repairOrders || [];
   const now = new Date();
 
   const eventMap = new Map();
+  const eventDates = new Map();
+  const eventBatchIds = new Map();
 
   for (const item of items) {
     const itemId = item.id || item.code;
     const returns = item.returns || [];
+    const sortedBorrowings = (item.borrowings || []).slice().sort((a, b) => new Date(a.at) - new Date(b.at));
 
-    for (const b of item.borrowings || []) {
+    for (const b of sortedBorrowings) {
       if (!isInDateRange(b.at, startDate, endDate)) continue;
 
       const rawName = b.eventName || "";
       const eventKey = normalizeEventName(rawName) || "(未命名活动)";
       const display = rawName.trim() || "(未命名活动)";
+      const dateKey = getDateKey(b.at);
 
       if (!eventMap.has(eventKey)) {
         eventMap.set(eventKey, {
@@ -196,14 +223,20 @@ export function generateEventStats(db, startDate, endDate) {
           repairCount: 0,
           lastBorrowAt: b.at
         });
+        eventDates.set(eventKey, new Set());
+        eventBatchIds.set(eventKey, new Set());
       }
 
       const ev = eventMap.get(eventKey);
+      const dates = eventDates.get(eventKey);
+      const batchIds = eventBatchIds.get(eventKey);
+
       ev.borrowCount++;
       ev.itemIds.add(itemId);
+      if (dateKey) dates.add(dateKey);
 
       if (b.batchId) {
-        ev.batchBorrowCount++;
+        batchIds.add(b.batchId);
       } else {
         ev.singleBorrowCount++;
       }
@@ -224,40 +257,34 @@ export function generateEventStats(db, startDate, endDate) {
         }
       }
     }
-  }
 
-  for (const order of repairOrders) {
-    if (!isInDateRange(order.createdAt, startDate, endDate)) continue;
-    const targetId = order.itemId || order.itemCode;
-    const targetItem = items.find(i => (i.id || i.code) === targetId);
-    if (!targetItem) continue;
+    for (const order of repairOrders) {
+      if (!isInDateRange(order.createdAt, startDate, endDate)) continue;
+      const targetId = order.itemId || order.itemCode;
+      if (targetId !== itemId && targetId !== item.code) continue;
 
-    for (const b of targetItem.borrowings || []) {
-      if (!isInDateRange(b.at, startDate, endDate)) continue;
-      const rawName = b.eventName || "";
-      const eventKey = normalizeEventName(rawName) || "(未命名活动)";
-      const ev = eventMap.get(eventKey);
-      if (ev) {
-        ev.repairCount++;
-        break;
-      }
-    }
-  }
-
-  for (const item of items) {
-    const itemId = item.id || item.code;
-    for (const log of item.logs || []) {
-      if (!isInDateRange(log.at, startDate, endDate)) continue;
-      if (!isMaintenanceRepairLog(log)) continue;
-
-      for (const b of item.borrowings || []) {
-        if (!isInDateRange(b.at, startDate, endDate)) continue;
-        const rawName = b.eventName || "";
+      const nearest = findNearestBorrowingForRepair(order.createdAt, sortedBorrowings);
+      if (nearest && isInDateRange(nearest.at, startDate, endDate)) {
+        const rawName = nearest.eventName || "";
         const eventKey = normalizeEventName(rawName) || "(未命名活动)";
         const ev = eventMap.get(eventKey);
         if (ev) {
           ev.repairCount++;
-          break;
+        }
+      }
+    }
+
+    for (const log of item.logs || []) {
+      if (!isInDateRange(log.at, startDate, endDate)) continue;
+      if (!isMaintenanceRepairLog(log)) continue;
+
+      const nearest = findNearestBorrowingForRepair(log.at, sortedBorrowings);
+      if (nearest && isInDateRange(nearest.at, startDate, endDate)) {
+        const rawName = nearest.eventName || "";
+        const eventKey = normalizeEventName(rawName) || "(未命名活动)";
+        const ev = eventMap.get(eventKey);
+        if (ev) {
+          ev.repairCount++;
         }
       }
     }
@@ -265,11 +292,14 @@ export function generateEventStats(db, startDate, endDate) {
 
   const results = [];
   for (const [key, ev] of eventMap) {
+    const dates = eventDates.get(key) || new Set();
+    const batchIds = eventBatchIds.get(key) || new Set();
     results.push({
       eventName: ev.eventName,
+      eventCount: dates.size,
       borrowCount: ev.borrowCount,
       singleBorrowCount: ev.singleBorrowCount,
-      batchBorrowCount: ev.batchBorrowCount,
+      batchBorrowCount: batchIds.size,
       itemCount: ev.itemIds.size,
       overdueCount: ev.overdueCount,
       repairCount: ev.repairCount,
@@ -289,6 +319,7 @@ export function generateEventStats(db, startDate, endDate) {
 export function generateEventCSV(events, startDate, endDate) {
   const headers = [
     "活动名称",
+    "活动次数",
     "借用次数",
     "单道具借用",
     "批次借用",
@@ -300,6 +331,7 @@ export function generateEventCSV(events, startDate, endDate) {
 
   const rows = events.map(ev => [
     ev.eventName,
+    ev.eventCount,
     ev.borrowCount,
     ev.singleBorrowCount,
     ev.batchBorrowCount,
@@ -314,6 +346,7 @@ export function generateEventCSV(events, startDate, endDate) {
     ["汇总统计"],
     ["统计周期", (startDate || "开始") + " 至 " + (endDate || "至今")],
     ["活动总数", events.length],
+    ["活动总次数", events.reduce((s, e) => s + e.eventCount, 0)],
     ["借用总次数", events.reduce((s, e) => s + e.borrowCount, 0)],
     ["逾期未归还总数", events.reduce((s, e) => s + e.overdueCount, 0)],
     ["修补总数", events.reduce((s, e) => s + e.repairCount, 0)],
