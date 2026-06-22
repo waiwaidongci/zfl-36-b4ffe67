@@ -72,6 +72,39 @@ button.secondary { background:#69736a; }
 .commit-bar button { width:100%; }
 .commit-bar button:disabled { opacity:0.5; cursor:not-allowed; }
 
+.import-mode-options { display:flex; flex-direction:column; gap:10px; }
+.import-mode-option { display:flex; align-items:flex-start; gap:10px; padding:12px; border:2px solid var(--line); border-radius:8px; cursor:pointer; transition:all 0.2s; }
+.import-mode-option:hover { border-color:#a0a8a0; background:#fafbf9; }
+.import-mode-option input[type="radio"] { margin-top:4px; flex-shrink:0; }
+.import-mode-option input[type="radio"]:checked ~ .mode-content strong { color:#2d6a4f; }
+.import-mode-option:has(input[type="radio"]:checked) { border-color:#2d6a4f; background:#f0f7f2; }
+.mode-content { flex:1; }
+.mode-content strong { display:block; margin-bottom:2px; }
+.mode-desc { font-size:13px; color:#666; }
+
+.update-list { display:flex; flex-direction:column; gap:12px; }
+.update-item-card { border:1px solid var(--line); border-radius:8px; padding:14px; background:#fafbf9; }
+.update-item-card.unchanged { opacity:0.7; background:#f5f5f5; }
+.update-item-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding-bottom:10px; border-bottom:1px dashed var(--line); }
+.update-item-code { font-weight:700; font-size:15px; }
+.update-item-badge { font-size:12px; padding:3px 8px; border-radius:12px; }
+.update-item-badge.changed { background:#fff3cd; color:#856404; }
+.update-item-badge.unchanged { background:#e2e3e5; color:#383d41; }
+.update-fields-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.field-group { border:1px solid var(--line); border-radius:6px; padding:10px; background:#fff; }
+.field-group.updatable { border-left:3px solid #2d6a4f; }
+.field-group.non-updatable { border-left:3px solid #6c757d; opacity:0.85; }
+.field-group-title { font-size:12px; font-weight:700; margin-bottom:8px; color:#666; text-transform:uppercase; letter-spacing:0.5px; }
+.field-row { display:flex; flex-direction:column; gap:2px; padding:4px 0; font-size:13px; }
+.field-row:not(:last-child) { border-bottom:1px dashed #eee; margin-bottom:4px; padding-bottom:6px; }
+.field-label { color:#666; font-size:12px; }
+.field-value-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.field-old-value { text-decoration:line-through; color:#999; }
+.field-new-value { font-weight:600; color:#2d6a4f; }
+.field-arrow { color:#999; }
+.field-same-value { color:#333; }
+.field-non-updatable-value { color:#333; font-family:monospace; font-size:12px; }
+
 .inventory-section { margin-bottom:18px; }
 .inventory-section h2 { margin:0 0 12px; }
 .inv-form-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }

@@ -92,20 +92,52 @@ CP-101,木桨,划船演示,老杉木,器具架B
         </div>
         <div id="previewResult" style="display:none;margin-top:12px">
           <div class="preview-summary"></div>
-          <h3>解析成功（<span class="valid-count">0</span>条）</h3>
-          <div class="preview-table-wrap">
-            <table class="preview-table">
-              <thead><tr><th>编号</th><th>名称</th><th>用途</th><th>材质</th><th>存放点</th></tr></thead>
-              <tbody class="preview-tbody"></tbody>
-            </table>
+          <div id="newItemsSection" style="display:none">
+            <h3>新增道具（<span class="new-count">0</span>条）</h3>
+            <div class="preview-table-wrap">
+              <table class="preview-table">
+                <thead><tr><th>编号</th><th>名称</th><th>用途</th><th>材质</th><th>存放点</th></tr></thead>
+                <tbody class="new-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="updateItemsSection" style="display:none">
+            <h3 class="warn">更新已有道具（<span class="update-count">0</span>条有变更，<span class="unchanged-count">0</span>条无变更）</h3>
+            <div class="update-list"></div>
           </div>
           <div id="errorSection" style="display:none">
             <h3 class="warn">错误行（<span class="error-count">0</span>条）</h3>
             <ul class="error-list"></ul>
           </div>
-          <div id="duplicateSection" style="display:none">
-            <h3 class="warn">重复编号（<span class="dup-count">0</span>条）</h3>
-            <ul class="dup-list"></ul>
+          <div id="fileDuplicateSection" style="display:none">
+            <h3 class="warn">文件内重复编号（<span class="file-dup-count">0</span>条）</h3>
+            <ul class="file-dup-list"></ul>
+          </div>
+          <div id="importModeSection" style="display:none;margin-top:16px;padding-top:16px;border-top:1px solid #e0e0e0">
+            <h3 style="margin-bottom:12px">选择导入模式</h3>
+            <div class="import-mode-options">
+              <label class="import-mode-option">
+                <input type="radio" name="importMode" value="insert_only" checked>
+                <div class="mode-content">
+                  <strong>仅新增</strong>
+                  <span class="mode-desc">只导入新编号的道具，跳过已有编号</span>
+                </div>
+              </label>
+              <label class="import-mode-option">
+                <input type="radio" name="importMode" value="update_only">
+                <div class="mode-content">
+                  <strong>仅更新</strong>
+                  <span class="mode-desc">只更新已有编号的道具，跳过新编号</span>
+                </div>
+              </label>
+              <label class="import-mode-option">
+                <input type="radio" name="importMode" value="insert_and_update">
+                <div class="mode-content">
+                  <strong>新增并更新</strong>
+                  <span class="mode-desc">新编号创建新道具，已有编号更新基础档案</span>
+                </div>
+              </label>
+            </div>
           </div>
           <div class="commit-bar">
             <button type="button" id="commitBtn" disabled data-perm="import_items">确认导入</button>
