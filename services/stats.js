@@ -161,6 +161,178 @@ export function getReportSummary(db, startDate, endDate) {
   };
 }
 
+function normalizeEventName(name) {
+  if (!name) return "";
+  return name.trim().replace(/\s+/g, "");
+}
+
+export function generateEventStats(db, startDate, endDate) {
+  const items = db.items || [];
+  const batches = db.borrowBatches || [];
+  const repairOrders = db.repairOrders || [];
+  const now = new Date();
+
+  const eventMap = new Map();
+
+  for (const item of items) {
+    const itemId = item.id || item.code;
+    const returns = item.returns || [];
+
+    for (const b of item.borrowings || []) {
+      if (!isInDateRange(b.at, startDate, endDate)) continue;
+
+      const rawName = b.eventName || "";
+      const eventKey = normalizeEventName(rawName) || "(未命名活动)";
+      const display = rawName.trim() || "(未命名活动)";
+
+      if (!eventMap.has(eventKey)) {
+        eventMap.set(eventKey, {
+          eventName: display,
+          borrowCount: 0,
+          singleBorrowCount: 0,
+          batchBorrowCount: 0,
+          itemIds: new Set(),
+          overdueCount: 0,
+          repairCount: 0,
+          lastBorrowAt: b.at
+        });
+      }
+
+      const ev = eventMap.get(eventKey);
+      ev.borrowCount++;
+      ev.itemIds.add(itemId);
+
+      if (b.batchId) {
+        ev.batchBorrowCount++;
+      } else {
+        ev.singleBorrowCount++;
+      }
+
+      if (b.at && (!ev.lastBorrowAt || new Date(b.at) > new Date(ev.lastBorrowAt))) {
+        ev.lastBorrowAt = b.at;
+      }
+
+      if (b.dueDate) {
+        const dueDate = new Date(b.dueDate);
+        const hasReturn = returns.some(r => {
+          if (!r.returnDate) return false;
+          return new Date(r.returnDate) >= dueDate;
+        });
+        const isStillBorrowed = item.status === "已借出" || item.status === "待归还";
+        if (dueDate < now && (!hasReturn || isStillBorrowed)) {
+          ev.overdueCount++;
+        }
+      }
+    }
+  }
+
+  for (const order of repairOrders) {
+    if (!isInDateRange(order.createdAt, startDate, endDate)) continue;
+    const targetId = order.itemId || order.itemCode;
+    const targetItem = items.find(i => (i.id || i.code) === targetId);
+    if (!targetItem) continue;
+
+    for (const b of targetItem.borrowings || []) {
+      if (!isInDateRange(b.at, startDate, endDate)) continue;
+      const rawName = b.eventName || "";
+      const eventKey = normalizeEventName(rawName) || "(未命名活动)";
+      const ev = eventMap.get(eventKey);
+      if (ev) {
+        ev.repairCount++;
+        break;
+      }
+    }
+  }
+
+  for (const item of items) {
+    const itemId = item.id || item.code;
+    for (const log of item.logs || []) {
+      if (!isInDateRange(log.at, startDate, endDate)) continue;
+      if (!isMaintenanceRepairLog(log)) continue;
+
+      for (const b of item.borrowings || []) {
+        if (!isInDateRange(b.at, startDate, endDate)) continue;
+        const rawName = b.eventName || "";
+        const eventKey = normalizeEventName(rawName) || "(未命名活动)";
+        const ev = eventMap.get(eventKey);
+        if (ev) {
+          ev.repairCount++;
+          break;
+        }
+      }
+    }
+  }
+
+  const results = [];
+  for (const [key, ev] of eventMap) {
+    results.push({
+      eventName: ev.eventName,
+      borrowCount: ev.borrowCount,
+      singleBorrowCount: ev.singleBorrowCount,
+      batchBorrowCount: ev.batchBorrowCount,
+      itemCount: ev.itemIds.size,
+      overdueCount: ev.overdueCount,
+      repairCount: ev.repairCount,
+      lastBorrowAt: ev.lastBorrowAt
+    });
+  }
+
+  results.sort((a, b) => {
+    if (!a.lastBorrowAt) return 1;
+    if (!b.lastBorrowAt) return -1;
+    return new Date(b.lastBorrowAt) - new Date(a.lastBorrowAt);
+  });
+
+  return results;
+}
+
+export function generateEventCSV(events, startDate, endDate) {
+  const headers = [
+    "活动名称",
+    "借用次数",
+    "单道具借用",
+    "批次借用",
+    "涉及道具数",
+    "逾期未归还数",
+    "产生修补数",
+    "最近借用时间"
+  ];
+
+  const rows = events.map(ev => [
+    ev.eventName,
+    ev.borrowCount,
+    ev.singleBorrowCount,
+    ev.batchBorrowCount,
+    ev.itemCount,
+    ev.overdueCount,
+    ev.repairCount,
+    ev.lastBorrowAt ? new Date(ev.lastBorrowAt).toLocaleString("zh-CN") : ""
+  ]);
+
+  const summaryRows = [
+    [],
+    ["汇总统计"],
+    ["统计周期", (startDate || "开始") + " 至 " + (endDate || "至今")],
+    ["活动总数", events.length],
+    ["借用总次数", events.reduce((s, e) => s + e.borrowCount, 0)],
+    ["逾期未归还总数", events.reduce((s, e) => s + e.overdueCount, 0)],
+    ["修补总数", events.reduce((s, e) => s + e.repairCount, 0)],
+    ["生成时间", new Date().toLocaleString("zh-CN")]
+  ];
+
+  const allRows = [headers, ...rows, ...summaryRows];
+
+  const escapeField = (field) => {
+    const str = String(field ?? "");
+    if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  };
+
+  return "\uFEFF" + allRows.map(row => row.map(escapeField).join(",")).join("\n");
+}
+
 export function generateCSV(report) {
   const headers = [
     "编号",

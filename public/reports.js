@@ -1,6 +1,8 @@
 import { initAuth, renderLoginStatusBar, applyPermissionGuards, can } from "./auth.js";
 
 let reportData = { summary: null, items: [] };
+let eventData = { events: [] };
+let activeTab = "item";
 
 async function api(path, options) {
   const res = await fetch(path, options && options.body ? { ...options, headers: { 'Content-Type': 'application/json' } } : options);
@@ -104,6 +106,75 @@ function renderItems(items) {
   `;
 }
 
+function renderEvents(events) {
+  const el = document.getElementById('reportEvents');
+  const q = document.getElementById('eventSearch').value.trim().toLowerCase();
+
+  const filtered = events.filter(ev =>
+    !q || (ev.eventName || '').toLowerCase().includes(q)
+  );
+
+  if (filtered.length === 0) {
+    el.innerHTML = '<div class="empty">暂无数据</div>';
+    return;
+  }
+
+  const totalBorrow = filtered.reduce((s, e) => s + e.borrowCount, 0);
+  const totalOverdue = filtered.reduce((s, e) => s + e.overdueCount, 0);
+  const totalRepair = filtered.reduce((s, e) => s + e.repairCount, 0);
+
+  el.innerHTML = `
+    <div class="report-summary-grid">
+      <div class="summary-card">
+        <span>活动总数</span>
+        <strong>${filtered.length}</strong>
+      </div>
+      <div class="summary-card">
+        <span>借用总次数</span>
+        <strong class="ok">${totalBorrow}</strong>
+      </div>
+      <div class="summary-card">
+        <span>逾期未归还</span>
+        <strong class="warn">${totalOverdue}</strong>
+      </div>
+      <div class="summary-card">
+        <span>产生修补</span>
+        <strong class="info">${totalRepair}</strong>
+      </div>
+    </div>
+    <div class="report-table-wrap" style="margin-top:12px">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>活动名称</th>
+            <th>借用次数</th>
+            <th>单道具借用</th>
+            <th>批次借用</th>
+            <th>涉及道具数</th>
+            <th>逾期未归还数</th>
+            <th>产生修补数</th>
+            <th>最近借用时间</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filtered.map(ev => `
+            <tr>
+              <td><strong>${ev.eventName}</strong></td>
+              <td>${ev.borrowCount}</td>
+              <td>${ev.singleBorrowCount}</td>
+              <td>${ev.batchBorrowCount}</td>
+              <td>${ev.itemCount}</td>
+              <td class="${ev.overdueCount > 0 ? 'warn' : ''}">${ev.overdueCount}</td>
+              <td>${ev.repairCount}</td>
+              <td>${ev.lastBorrowAt ? new Date(ev.lastBorrowAt).toLocaleString('zh-CN') : '-'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
 async function loadReport() {
   try {
     document.getElementById('reportSummary').innerHTML = '<div class="loading">加载中...</div>';
@@ -122,6 +193,21 @@ async function loadReport() {
   }
 }
 
+async function loadEventReport() {
+  try {
+    document.getElementById('reportEvents').innerHTML = '<div class="loading">加载中...</div>';
+
+    const params = getDateParams();
+    const data = await api('/api/reports/events' + (params ? '?' + params : ''));
+    eventData = data;
+
+    renderEvents(data.events);
+    applyPermissionGuards();
+  } catch (e) {
+    document.getElementById('reportEvents').innerHTML = '<div class="error">加载失败：' + e.message + '</div>';
+  }
+}
+
 function setQuickRange(days) {
   const end = new Date();
   const start = new Date();
@@ -135,19 +221,44 @@ function setQuickRange(days) {
     document.getElementById('endDate').value = end.toISOString().slice(0, 10);
   }
 
+  loadAllReports();
+}
+
+function loadAllReports() {
   loadReport();
+  loadEventReport();
 }
 
 function exportCSV() {
-  const params = getDateParams();
-  const url = '/api/reports/export' + (params ? '?' + params : '');
-  window.location.href = url;
+  if (activeTab === 'event') {
+    const params = getDateParams();
+    const url = '/api/reports/events/export' + (params ? '?' + params : '');
+    window.location.href = url;
+  } else {
+    const params = getDateParams();
+    const url = '/api/reports/export' + (params ? '?' + params : '');
+    window.location.href = url;
+  }
 }
 
-document.getElementById('queryBtn').onclick = loadReport;
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.report-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  document.getElementById('tabItem').style.display = tab === 'item' ? '' : 'none';
+  document.getElementById('tabEvent').style.display = tab === 'event' ? '' : 'none';
+
+  if (tab === 'event' && eventData.events.length === 0) {
+    loadEventReport();
+  }
+}
+
+document.getElementById('queryBtn').onclick = loadAllReports;
 document.getElementById('exportBtn').onclick = exportCSV;
 document.getElementById('search').oninput = () => renderItems(reportData.items || []);
-document.getElementById('reload').onclick = loadReport;
+document.getElementById('eventSearch').oninput = () => renderEvents(eventData.events || []);
+document.getElementById('reload').onclick = loadAllReports;
 
 document.querySelectorAll('.quick-btn').forEach(btn => {
   btn.onclick = () => {
@@ -158,6 +269,10 @@ document.querySelectorAll('.quick-btn').forEach(btn => {
       setQuickRange(parseInt(range, 10));
     }
   };
+});
+
+document.querySelectorAll('.report-tab').forEach(tab => {
+  tab.onclick = () => switchTab(tab.dataset.tab);
 });
 
 (function initDefaultDates() {

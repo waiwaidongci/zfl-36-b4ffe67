@@ -380,21 +380,40 @@ export function renderReportsPage() {
       </div>
 
       <div class="panel" style="margin-top:14px">
-        <h2>汇总统计</h2>
-        <div id="reportSummary" class="report-summary">
-          <div class="loading">加载中...</div>
+        <div class="report-tab-bar">
+          <button class="report-tab active" data-tab="item">道具维度</button>
+          <button class="report-tab" data-tab="event">演示活动维度</button>
         </div>
-      </div>
 
-      <div class="panel" style="margin-top:14px">
-        <div class="toolbar">
-          <h2 style="margin:0">道具明细</h2>
-          <div>
-            <input id="search" placeholder="搜索编号或名称">
+        <div id="tabItem" class="report-tab-content">
+          <h2>汇总统计</h2>
+          <div id="reportSummary" class="report-summary">
+            <div class="loading">加载中...</div>
+          </div>
+
+          <div style="margin-top:14px">
+            <div class="toolbar">
+              <h2 style="margin:0">道具明细</h2>
+              <div>
+                <input id="search" placeholder="搜索编号或名称">
+              </div>
+            </div>
+            <div id="reportItems" style="margin-top:12px">
+              <div class="loading">加载中...</div>
+            </div>
           </div>
         </div>
-        <div id="reportItems" style="margin-top:12px">
-          <div class="loading">加载中...</div>
+
+        <div id="tabEvent" class="report-tab-content" style="display:none">
+          <div class="toolbar">
+            <h2 style="margin:0">演示活动统计</h2>
+            <div>
+              <input id="eventSearch" placeholder="搜索活动名称">
+            </div>
+          </div>
+          <div id="reportEvents" style="margin-top:12px">
+            <div class="loading">加载中...</div>
+          </div>
         </div>
       </div>
     </section>

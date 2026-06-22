@@ -668,6 +668,31 @@ button.small {
 }
 
 .report-filter { }
+.report-tab-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--line);
+  margin-bottom: 16px;
+}
+.report-tab {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.report-tab:hover {
+  color: var(--ink);
+}
+.report-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
 .filter-row {
   display: flex;
   gap: 14px;
