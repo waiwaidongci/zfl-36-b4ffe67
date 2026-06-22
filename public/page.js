@@ -718,11 +718,20 @@ export function renderBackupPage() {
               <ul id="dangerFlagsList" style="margin:0;padding-left:20px"></ul>
             </div>
 
+            <div id="diffPanel" style="display:none;margin-top:12px">
+              <h3>🔍 差异预览 <span id="diffSummaryBadge" class="pill" style="margin-left:8px">计算中...</span></h3>
+              <div id="diffSummaryStats" style="margin:10px 0"></div>
+              <div id="diffCollections" style="margin-top:8px"></div>
+            </div>
+
             <div class="commit-bar" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
-              <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                <label class="checkbox-label" style="margin:0">
+              <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
+                <label class="checkbox-label" style="margin:0;align-items:flex-start">
                   <input type="checkbox" id="confirmCheckbox">
-                  <span>我已理解：恢复将覆盖<strong>全部现有数据</strong>，操作前将自动创建当前数据备份</span>
+                  <div>
+                    <div style="font-weight:700">我已理解：恢复将覆盖以下全部现有数据集合，操作前将自动创建当前数据备份</div>
+                    <div id="coveredCollectionsList" class="meta" style="margin-top:6px"></div>
+                  </div>
                 </label>
               </div>
               <div style="margin-top:12px;display:flex;gap:10px">

@@ -44,6 +44,183 @@ function backupFilename(label) {
   return `cormorant-props-${label || "backup"}-${ts}.json`;
 }
 
+const DIFF_COLLECTIONS = [
+  { key: "items", label: "道具", idField: "code", titleField: "name", keyFields: ["code", "name", "purpose", "material", "status", "wear", "location"] },
+  { key: "borrowBatches", label: "借用批次", idField: "id", titleField: "name", keyFields: ["id", "name", "eventName", "borrower", "dueDate", "status"] },
+  { key: "returns", label: "归还记录", idField: "id", titleField: "returnDate", keyFields: ["id", "itemCode", "returnDate", "returner", "needRepair", "wearChange"] },
+  { key: "repairOrders", label: "修补工单", idField: "id", titleField: "itemCode", keyFields: ["id", "itemCode", "itemName", "status", "problemDescription", "handler", "completionDate"] },
+  { key: "users", label: "用户", idField: "username", titleField: "displayName", keyFields: ["username", "displayName", "role", "createdAt"] },
+  { key: "maintenancePlans", label: "维护计划", idField: "itemCode", titleField: "itemCode", keyFields: ["itemCode", "nextDate", "type", "responsible"] }
+];
+
+function deepEqual(a, b) {
+  if (a === b) return true;
+  if (a == null || b == null) return false;
+  if (typeof a !== typeof b) return false;
+  if (typeof a !== "object") return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (Array.isArray(a)) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (!deepEqual(a[i], b[i])) return false;
+    }
+    return true;
+  }
+  const keysA = Object.keys(a);
+  const keysB = Object.keys(b);
+  if (keysA.length !== keysB.length) return false;
+  for (const k of keysA) {
+    if (!deepEqual(a[k], b[k])) return false;
+  }
+  return true;
+}
+
+function flattenReturns(db) {
+  const result = [];
+  if (!Array.isArray(db.items)) return result;
+  for (const item of db.items) {
+    if (Array.isArray(item.returns)) {
+      for (const r of item.returns) {
+        result.push({ ...r, itemCode: item.code, itemName: item.name });
+      }
+    }
+  }
+  return result;
+}
+
+function flattenMaintenancePlans(db) {
+  const result = [];
+  if (!Array.isArray(db.items)) return result;
+  for (const item of db.items) {
+    if (item.maintenancePlan && typeof item.maintenancePlan === "object") {
+      result.push({ itemCode: item.code, itemName: item.name, ...item.maintenancePlan });
+    }
+  }
+  return result;
+}
+
+function getCollectionData(db, key) {
+  if (key === "returns") return flattenReturns(db);
+  if (key === "maintenancePlans") return flattenMaintenancePlans(db);
+  return Array.isArray(db[key]) ? db[key] : [];
+}
+
+function summarizeRecord(rec, fields) {
+  const out = {};
+  for (const f of fields) {
+    if (rec[f] !== undefined) {
+      const v = rec[f];
+      if (typeof v === "object" && v !== null) {
+        out[f] = JSON.stringify(v);
+      } else {
+        out[f] = v;
+      }
+    }
+  }
+  return out;
+}
+
+function computeFieldDiff(oldRec, newRec, fields) {
+  const diffs = [];
+  for (const f of fields) {
+    const oldVal = oldRec[f];
+    const newVal = newRec[f];
+    if (!deepEqual(oldVal, newVal)) {
+      let oldDisp = oldVal === undefined || oldVal === null ? "(空)" : (typeof oldVal === "object" ? JSON.stringify(oldVal) : String(oldVal));
+      let newDisp = newVal === undefined || newVal === null ? "(空)" : (typeof newVal === "object" ? JSON.stringify(newVal) : String(newVal));
+      if (oldDisp.length > 80) oldDisp = oldDisp.slice(0, 77) + "...";
+      if (newDisp.length > 80) newDisp = newDisp.slice(0, 77) + "...";
+      diffs.push({ field: f, oldValue: oldDisp, newValue: newDisp });
+    }
+  }
+  return diffs;
+}
+
+function diffCollection(currentDb, backupDb, colDef) {
+  const { key, idField, titleField, keyFields } = colDef;
+  const currentList = getCollectionData(currentDb, key);
+  const backupList = getCollectionData(backupDb, key);
+
+  const currentMap = new Map();
+  for (const r of currentList) {
+    const id = r[idField];
+    if (id !== undefined && id !== null) currentMap.set(String(id), r);
+  }
+
+  const backupMap = new Map();
+  for (const r of backupList) {
+    const id = r[idField];
+    if (id !== undefined && id !== null) backupMap.set(String(id), r);
+  }
+
+  const added = [];
+  const removed = [];
+  const modified = [];
+
+  for (const [id, rec] of backupMap) {
+    if (!currentMap.has(id)) {
+      added.push({
+        id: String(id),
+        title: rec[titleField] !== undefined ? String(rec[titleField]) : String(id),
+        data: summarizeRecord(rec, keyFields)
+      });
+    }
+  }
+
+  for (const [id, rec] of currentMap) {
+    if (!backupMap.has(id)) {
+      removed.push({
+        id: String(id),
+        title: rec[titleField] !== undefined ? String(rec[titleField]) : String(id),
+        data: summarizeRecord(rec, keyFields)
+      });
+    }
+  }
+
+  for (const [id, backupRec] of backupMap) {
+    if (currentMap.has(id)) {
+      const currRec = currentMap.get(id);
+      const fieldDiffs = computeFieldDiff(currRec, backupRec, keyFields);
+      if (fieldDiffs.length > 0) {
+        modified.push({
+          id: String(id),
+          title: backupRec[titleField] !== undefined ? String(backupRec[titleField]) : String(id),
+          fields: fieldDiffs
+        });
+      }
+    }
+  }
+
+  return {
+    addedCount: added.length,
+    removedCount: removed.length,
+    modifiedCount: modified.length,
+    added: added.slice(0, 100),
+    removed: removed.slice(0, 100),
+    modified: modified.slice(0, 100),
+    hasMoreAdded: added.length > 100,
+    hasMoreRemoved: removed.length > 100,
+    hasMoreModified: modified.length > 100
+  };
+}
+
+function buildDiff(currentDb, backupDb) {
+  const collections = {};
+  const stats = { addedTotal: 0, removedTotal: 0, modifiedTotal: 0 };
+  for (const col of DIFF_COLLECTIONS) {
+    const result = diffCollection(currentDb, backupDb, col);
+    collections[col.key] = { label: col.label, ...result };
+    stats.addedTotal += result.addedCount;
+    stats.removedTotal += result.removedCount;
+    stats.modifiedTotal += result.modifiedCount;
+  }
+  return {
+    collections,
+    stats,
+    coveredKeys: DIFF_COLLECTIONS.map(c => ({ key: c.key, label: c.label }))
+  };
+}
+
 export async function handleBackup(req, res, url) {
   if (url.pathname === "/api/backup/info" && req.method === "GET") {
     const user = await requirePermission(req, res, PERMISSIONS.VIEW_BACKUPS);
@@ -193,6 +370,7 @@ export async function handleBackup(req, res, url) {
       let migratedPreview = null;
       let migrationWarnings = [...integrity.warnings];
       const finalCandidate = normalized;
+      let migratedDataForDiff = null;
 
       const postIntegrityValidation = validateDatabaseObject(finalCandidate);
 
@@ -200,6 +378,7 @@ export async function handleBackup(req, res, url) {
         try {
           const toMigrate = JSON.parse(JSON.stringify(finalCandidate));
           const mres = applyMigrations(toMigrate);
+          migratedDataForDiff = toMigrate;
           migrationWarnings = migrationWarnings.concat(mres.warnings);
           const postV = validateDatabaseObject(toMigrate);
           migratedPreview = {
@@ -216,6 +395,15 @@ export async function handleBackup(req, res, url) {
 
       const finalValidation = migratedPreview ? (migratedPreview.postValidation || postIntegrityValidation) : postIntegrityValidation;
       const canRestore = finalValidation.valid;
+
+      let diffResult = null;
+      try {
+        const currentDb = await loadDb();
+        const backupForDiff = migratedDataForDiff ? migratedDataForDiff : finalCandidate;
+        diffResult = buildDiff(currentDb, backupForDiff);
+      } catch (diffErr) {
+        diffResult = { error: diffErr.message, collections: {}, stats: { addedTotal: 0, removedTotal: 0, modifiedTotal: 0 }, coveredKeys: [] };
+      }
 
       return send(res, 200, {
         canRestore,
@@ -244,7 +432,8 @@ export async function handleBackup(req, res, url) {
         duplicateCodes: findDuplicateCodes(actualData),
         migrationWarnings,
         migratedPreview,
-        dangerFlags: buildDangerFlags(rawValidation, actualData, { willMigrate, integrityApplied: integrity.normalized, postIntegrityValid: postIntegrityValidation.valid })
+        dangerFlags: buildDangerFlags(rawValidation, actualData, { willMigrate, integrityApplied: integrity.normalized, postIntegrityValid: postIntegrityValidation.valid }),
+        diff: diffResult
       });
 
     } catch (err) {

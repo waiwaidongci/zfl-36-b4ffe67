@@ -430,7 +430,6 @@ function renderPrecheck(data) {
   } else {
     mprev.style.display = "none";
   }
-
   const dupPanel = $("duplicatePanel");
   const dups = data.duplicateCodes || [];
   if (dups.length > 0) {
@@ -485,6 +484,9 @@ function renderPrecheck(data) {
   } else {
     dangerPanel.style.display = "none";
   }
+
+  renderDiff(data.diff);
+  renderCoveredCollections(data.diff);
 
   const restoreBtn = document.getElementById("restoreBtn");
   const hasCritical = flags.some(f => f.level === "critical");
@@ -615,3 +617,175 @@ async function main() {
 }
 
 document.addEventListener("DOMContentLoaded", main);
+
+function renderCoveredCollections(diff) {
+  const el = $("coveredCollectionsList");
+  if (!el || !diff) return;
+  const keys = diff.coveredKeys || [];
+  if (keys.length === 0) {
+    el.innerHTML = "所有内置数据集合将被替换";
+    return;
+  }
+  el.innerHTML = keys.map(k => `<span class="diff-cover-pill">${escapeHtml(k.label)}</span>`).join(" ");
+}
+
+function renderDiff(diff) {
+  const panel = $("diffPanel");
+  if (!diff) {
+    panel.style.display = "none";
+    return;
+  }
+  panel.style.display = "block";
+
+  const badge = $("diffSummaryBadge");
+  const statsBox = $("diffSummaryStats");
+  const collectionsBox = $("diffCollections");
+
+  if (diff.error) {
+    badge.textContent = "计算失败";
+    badge.className = "pill pill-warn";
+    statsBox.innerHTML = `<div class="warn">差异计算出错: ${escapeHtml(diff.error)}</div>`;
+    collectionsBox.innerHTML = "";
+    return;
+  }
+
+  const s = diff.stats || { addedTotal: 0, removedTotal: 0, modifiedTotal: 0 };
+  const totalDiff = s.addedTotal + s.removedTotal + s.modifiedTotal;
+
+  if (totalDiff === 0) {
+    badge.textContent = "无差异";
+    badge.className = "pill pill-ok";
+    statsBox.innerHTML = `<div class="diff-zero-hint">✓ 备份数据与当前数据完全一致，恢复不会产生内容变化</div>`;
+    collectionsBox.innerHTML = "";
+    return;
+  }
+
+  badge.textContent = `${totalDiff} 项差异`;
+  badge.className = totalDiff > 0 ? "pill pill-warn" : "pill pill-ok";
+
+  statsBox.innerHTML = `
+    <div class="diff-stats">
+      <div class="diff-stat added"><span class="diff-stat-label">备份中新增</span><strong>${s.addedTotal}</strong><span class="diff-stat-desc">恢复后将新增这些记录</span></div>
+      <div class="diff-stat removed"><span class="diff-stat-label">当前独有</span><strong>${s.removedTotal}</strong><span class="diff-stat-desc">恢复后将丢失这些记录</span></div>
+      <div class="diff-stat modified"><span class="diff-stat-label">内容变更</span><strong>${s.modifiedTotal}</strong><span class="diff-stat-desc">关键字段存在差异</span></div>
+    </div>`;
+
+  const cols = diff.collections || {};
+  let html = "";
+  const collOrder = ["items", "borrowBatches", "returns", "repairOrders", "users", "maintenancePlans"];
+  for (const key of collOrder) {
+    const c = cols[key];
+    if (!c) continue;
+    const hasAny = (c.addedCount || 0) + (c.removedCount || 0) + (c.modifiedCount || 0) > 0;
+    html += `<div class="diff-collection-card" data-coll="${escapeHtml(key)}">
+      <div class="diff-coll-header">
+        <div class="diff-coll-title">
+          <span class="diff-coll-label">${escapeHtml(c.label)}</span>
+          ${hasAny ? `
+          <span class="pill diff-pill-added" style="margin-left:6px">+${c.addedCount}</span>
+          <span class="pill diff-pill-removed" style="margin-left:4px">−${c.removedCount}</span>
+          <span class="pill diff-pill-modified" style="margin-left:4px">~${c.modifiedCount}</span>
+          ` : `<span class="pill pill-ok" style="margin-left:6px">无差异</span>`}
+        </div>
+        ${hasAny ? `<button type="button" class="secondary small diff-toggle-btn" data-target="diff-coll-${escapeHtml(key)}">展开详情</button>` : ""}
+      </div>
+      <div class="diff-coll-body" id="diff-coll-${escapeHtml(key)}" style="display:none;margin-top:10px">
+        ${renderCollectionBody(c, key)}
+      </div>
+    </div>`;
+  }
+  collectionsBox.innerHTML = html;
+
+  collectionsBox.querySelectorAll(".diff-toggle-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const targetId = btn.getAttribute("data-target");
+      const target = document.getElementById(targetId);
+      if (!target) return;
+      const isShown = target.style.display !== "none";
+      target.style.display = isShown ? "none" : "block";
+      btn.textContent = isShown ? "展开详情" : "收起详情";
+    });
+  });
+}
+
+function renderCollectionBody(c, key) {
+  let html = "";
+
+  if (c.addedCount > 0) {
+    html += `<div class="diff-section">
+      <div class="diff-section-title diff-section-added"><span class="diff-icon">➕</span>备份中新增（恢复后将新增 ${c.addedCount} 条）</div>
+      <div class="diff-list">`;
+    for (const item of (c.added || [])) {
+      html += renderDiffItemRow("added", item);
+    }
+    if (c.hasMoreAdded) {
+      html += `<div class="meta diff-more-hint">... 以及 ${c.addedCount - (c.added || []).length} 条更多</div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  if (c.removedCount > 0) {
+    html += `<div class="diff-section">
+      <div class="diff-section-title diff-section-removed"><span class="diff-icon">➖</span>当前独有（恢复后将丢失 ${c.removedCount} 条）</div>
+      <div class="diff-list">`;
+    for (const item of (c.removed || [])) {
+      html += renderDiffItemRow("removed", item);
+    }
+    if (c.hasMoreRemoved) {
+      html += `<div class="meta diff-more-hint">... 以及 ${c.removedCount - (c.removed || []).length} 条更多</div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  if (c.modifiedCount > 0) {
+    html += `<div class="diff-section">
+      <div class="diff-section-title diff-section-modified"><span class="diff-icon">✏️</span>内容变更（${c.modifiedCount} 条关键字段不同）</div>
+      <div class="diff-list">`;
+    for (const item of (c.modified || [])) {
+      html += renderModifiedItem(item);
+    }
+    if (c.hasMoreModified) {
+      html += `<div class="meta diff-more-hint">... 以及 ${c.modifiedCount - (c.modified || []).length} 条更多</div>`;
+    }
+    html += `</div></div>`;
+  }
+
+  return html;
+}
+
+function renderDiffItemRow(kind, item) {
+  const idCls = "diff-item-id";
+  const dataRows = [];
+  for (const [k, v] of Object.entries(item.data || {})) {
+    dataRows.push(`<div class="diff-field"><span class="diff-field-label">${escapeHtml(k)}:</span><span class="diff-field-value">${escapeHtml(String(v))}</span></div>`);
+  }
+  return `<div class="diff-item diff-item-${kind}">
+    <div class="diff-item-header">
+      <span class="${idCls}">${escapeHtml(item.id)}</span>
+      ${item.title && item.title !== item.id ? `<span class="diff-item-title">${escapeHtml(item.title)}</span>` : ""}
+    </div>
+    <div class="diff-fields-grid">${dataRows.join("")}</div>
+  </div>`;
+}
+
+function renderModifiedItem(item) {
+  const fields = (item.fields || []).map(f => `
+    <div class="diff-mod-field">
+      <span class="diff-mod-field-label">${escapeHtml(f.field)}</span>
+      <div class="diff-mod-field-values">
+        <span class="diff-val-old"><span class="diff-val-tag">当前</span>${escapeHtml(f.oldValue)}</span>
+        <span class="diff-arrow">→</span>
+        <span class="diff-val-new"><span class="diff-val-tag">备份</span>${escapeHtml(f.newValue)}</span>
+      </div>
+    </div>
+  `).join("");
+
+  return `<div class="diff-item diff-item-modified">
+    <div class="diff-item-header">
+      <span class="diff-item-id">${escapeHtml(item.id)}</span>
+      ${item.title && item.title !== item.id ? `<span class="diff-item-title">${escapeHtml(item.title)}</span>` : ""}
+      <span class="pill diff-pill-modified" style="margin-left:auto">${item.fields ? item.fields.length : 0} 处变更</span>
+    </div>
+    <div class="diff-mod-fields">${fields}</div>
+  </div>`;
+}
