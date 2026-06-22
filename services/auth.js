@@ -113,9 +113,36 @@ const ROLE_PERMISSIONS = {
   ]
 };
 
-export function hasPermission(role, permission) {
-  const perms = ROLE_PERMISSIONS[role] || [];
+export function getUserPermissions(db, role) {
+  if (db && Array.isArray(db.roles)) {
+    const roleObj = db.roles.find(r => r.id === role);
+    if (roleObj) return roleObj.permissions || [];
+  }
+  return ROLE_PERMISSIONS[role] || [];
+}
+
+export function hasPermission(db, role, permission) {
+  if (arguments.length === 2) {
+    permission = role;
+    role = db;
+    return (ROLE_PERMISSIONS[role] || []).includes(permission);
+  }
+  const perms = getUserPermissions(db, role);
   return perms.includes(permission);
+}
+
+export function findRoleById(db, roleId) {
+  db.roles ||= [];
+  return db.roles.find(r => r.id === roleId);
+}
+
+export function findRoleByName(db, name) {
+  db.roles ||= [];
+  return db.roles.find(r => r.name === name);
+}
+
+export function newRoleId() {
+  return "ROLE-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
 }
 
 export function extractTokenFromRequest(req) {
@@ -128,13 +155,23 @@ export function extractTokenFromRequest(req) {
   return null;
 }
 
-export function serializeUser(user) {
+export function serializeUser(user, db) {
   if (!user) return null;
+  let roleLabel = user.role;
+  if (db && Array.isArray(db.roles)) {
+    const roleObj = db.roles.find(r => r.id === user.role);
+    if (roleObj) roleLabel = roleObj.label || roleObj.name;
+    else roleLabel = ROLE_LABELS[user.role] || user.role;
+  } else {
+    roleLabel = ROLE_LABELS[user.role] || user.role;
+  }
+  const permissions = db ? getUserPermissions(db, user.role) : (ROLE_PERMISSIONS[user.role] || []);
   return {
     id: user.id,
     username: user.username,
     displayName: user.displayName,
     role: user.role,
-    roleLabel: ROLE_LABELS[user.role] || user.role
+    roleLabel,
+    permissions
   };
 }

@@ -8,7 +8,50 @@ import {
   listBackups
 } from "../services/storage.js";
 import { seed } from "../data/seed.js";
-import { migrate_v0_to_v1, TARGET_SCHEMA_VERSION, ensureIntegrity } from "./v001_to_v1.js";
+import { migrate_v0_to_v1 } from "./v001_to_v1.js";
+import { migrate_v1_to_v2, TARGET_SCHEMA_VERSION as V2_TARGET } from "./v002_to_v2.js";
+import { ensureIntegrity } from "./v001_to_v1.js";
+import { PERMISSIONS } from "../services/auth.js";
+
+const TARGET_SCHEMA_VERSION = V2_TARGET;
+
+const DEFAULT_ROLES = [
+  {
+    id: "admin",
+    name: "admin",
+    label: "管理员",
+    permissions: Object.values(PERMISSIONS),
+    isSystem: true,
+    createdAt: "2026-01-01T00:00:00.000Z"
+  },
+  {
+    id: "maintainer",
+    name: "maintainer",
+    label: "维护员",
+    permissions: [
+      PERMISSIONS.ADD_LOG,
+      PERMISSIONS.RETURN_ITEM,
+      PERMISSIONS.COMPLETE_MAINTENANCE,
+      PERMISSIONS.CREATE_INVENTORY,
+      PERMISSIONS.CREATE_REPAIR_ORDER,
+      PERMISSIONS.UPDATE_REPAIR_ORDER,
+      PERMISSIONS.COMPLETE_REPAIR_ORDER,
+      PERMISSIONS.ADD_BATCH_LOG,
+      PERMISSIONS.VIEW_BACKUPS,
+      PERMISSIONS.DOWNLOAD_BACKUP
+    ],
+    isSystem: true,
+    createdAt: "2026-01-01T00:00:00.000Z"
+  },
+  {
+    id: "viewer",
+    name: "viewer",
+    label: "只读用户",
+    permissions: [PERMISSIONS.VIEW_BACKUPS],
+    isSystem: true,
+    createdAt: "2026-01-01T00:00:00.000Z"
+  }
+];
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = join(__dirname, "..");
@@ -16,7 +59,8 @@ const ROOT_DIR = join(__dirname, "..");
 export { TARGET_SCHEMA_VERSION, ensureIntegrity };
 
 const MIGRATIONS = [
-  { from: 0, to: 1, run: migrate_v0_to_v1 }
+  { from: 0, to: 1, run: migrate_v0_to_v1 },
+  { from: 1, to: 2, run: migrate_v1_to_v2 }
 ];
 
 export function getMigrations() {
@@ -75,6 +119,7 @@ export async function loadAndMigrate() {
       users: undefined
     };
     migrate_v0_to_v1(seeded);
+    migrate_v1_to_v2(seeded);
     await writeDatabase(ROOT_DIR, seeded);
     return {
       fresh: true,

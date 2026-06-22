@@ -1,4 +1,11 @@
 {
+  "backupMeta": {
+    "createdAt": "2026-06-22T04:25:47.031Z",
+    "tag": "pre-migration-v1",
+    "schemaVersion": 1,
+    "originalChecksum": "e9ad3334aea705d46429c7a9b8016157ba3a5406a2950743f5a743796754d1bd",
+    "originalBytes": 25401
+  },
   "items": [
     {
       "code": "CP-001",
@@ -1034,77 +1041,7 @@
       "appliedAt": "2026-06-21T09:38:48.468Z",
       "fromVersion": 0,
       "warnings": []
-    },
-    {
-      "version": 2,
-      "appliedAt": "2026-06-22T04:54:45.929Z",
-      "fromVersion": 1,
-      "warnings": [
-        "roles 字段不存在，已初始化为默认系统角色"
-      ]
     }
   ],
-  "schemaVersion": 2,
-  "roles": [
-    {
-      "id": "admin",
-      "name": "admin",
-      "label": "管理员",
-      "permissions": [
-        "create_item",
-        "update_item_status",
-        "add_log",
-        "borrow_item",
-        "return_item",
-        "set_maintenance_plan",
-        "complete_maintenance",
-        "create_inventory",
-        "update_inventory",
-        "delete_inventory",
-        "create_repair_order",
-        "update_repair_order",
-        "complete_repair_order",
-        "delete_repair_order",
-        "import_items",
-        "create_batch",
-        "update_batch",
-        "add_batch_log",
-        "manage_users",
-        "download_backup",
-        "restore_backup",
-        "view_backups"
-      ],
-      "isSystem": true,
-      "createdAt": "2026-01-01T00:00:00.000Z"
-    },
-    {
-      "id": "maintainer",
-      "name": "maintainer",
-      "label": "维护员",
-      "permissions": [
-        "add_log",
-        "return_item",
-        "complete_maintenance",
-        "create_inventory",
-        "create_repair_order",
-        "update_repair_order",
-        "complete_repair_order",
-        "add_batch_log",
-        "view_backups",
-        "download_backup"
-      ],
-      "isSystem": true,
-      "createdAt": "2026-01-01T00:00:00.000Z"
-    },
-    {
-      "id": "viewer",
-      "name": "viewer",
-      "label": "只读用户",
-      "permissions": [
-        "view_backups"
-      ],
-      "isSystem": true,
-      "createdAt": "2026-01-01T00:00:00.000Z"
-    }
-  ]
+  "schemaVersion": 1
 }

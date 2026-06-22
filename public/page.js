@@ -468,6 +468,15 @@ export function renderUsersPage() {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>用户管理 - 鸬鹚捕鱼道具维护</title>
   <link rel="stylesheet" href="/public/style.css">
+  <style>
+    .user-tab-bar { display:flex;gap:0;border-bottom:2px solid #e5e7eb;margin-bottom:16px; }
+    .user-tab-btn { padding:8px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:500;color:#6b7785;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s; }
+    .user-tab-btn:hover { color:#2b7de9; }
+    .user-tab-btn.active { color:#2b7de9;border-bottom-color:#2b7de9; }
+    .perm-checkbox { display:inline-flex;align-items:center;gap:4px;margin:3px 8px 3px 0;font-size:13px;cursor:pointer; }
+    .perm-checkbox input { margin:0; }
+    #permCheckboxes { display:flex;flex-wrap:wrap;gap:4px 0;margin-top:8px;max-height:240px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:6px;padding:8px 12px; }
+  </style>
 </head>
 <body>
   <header>
@@ -484,15 +493,32 @@ export function renderUsersPage() {
   <main>
     <section class="full-width">
       <div class="panel">
-        <div class="toolbar">
-          <h2 style="margin:0">用户列表</h2>
-          <div>
-            <button id="addUserBtn" data-perm="manage_users">+ 新增用户</button>
-            <button id="changePwdBtn" class="secondary">修改密码</button>
+        <div class="user-tab-bar">
+          <button class="user-tab-btn active" data-tab="users">👤 用户管理</button>
+          <button class="user-tab-btn" data-tab="roles">🛡️ 角色管理</button>
+        </div>
+        <div id="userPanel">
+          <div class="toolbar">
+            <h2 style="margin:0">用户列表</h2>
+            <div>
+              <button id="addUserBtn" data-perm="manage_users">+ 新增用户</button>
+              <button id="changePwdBtn" class="secondary">修改密码</button>
+            </div>
+          </div>
+          <div id="userList" style="margin-top:12px">
+            <div class="loading">加载中...</div>
           </div>
         </div>
-        <div id="userList" style="margin-top:12px">
-          <div class="loading">加载中...</div>
+        <div id="rolePanel" style="display:none">
+          <div class="toolbar">
+            <h2 style="margin:0">角色列表</h2>
+            <div>
+              <button id="addRoleBtn" data-perm="manage_users">+ 新增角色</button>
+            </div>
+          </div>
+          <div id="roleList" style="margin-top:12px">
+            <div class="loading">加载中...</div>
+          </div>
         </div>
       </div>
     </section>
@@ -518,11 +544,7 @@ export function renderUsersPage() {
         </div>
         <div>
           <label>角色</label>
-          <select name="role" id="roleSelect">
-            <option value="admin">管理员</option>
-            <option value="maintainer">维护员</option>
-            <option value="viewer">只读用户</option>
-          </select>
+          <div id="roleSelectContainer"></div>
         </div>
         <div id="passwordField">
           <label>密码</label>
@@ -531,6 +553,34 @@ export function renderUsersPage() {
         <div id="pwdHint" class="meta">新增用户必填密码，修改用户时留空则不修改密码</div>
         <div class="modal-footer">
           <button type="button" class="secondary" id="modalCancel">取消</button>
+          <button type="submit">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div id="roleModal" class="modal" style="display:none">
+    <div class="modal-content" style="max-width:560px">
+      <div class="modal-header">
+        <h3 id="roleModalTitle">新增角色</h3>
+        <span class="modal-close" id="roleModalClose">&times;</span>
+      </div>
+      <form id="roleForm" class="modal-body">
+        <div>
+          <label>角色名称（英文标识）</label>
+          <input name="roleName" type="text" placeholder="如 operator" required>
+        </div>
+        <div>
+          <label>显示名称</label>
+          <input name="roleLabel" type="text" placeholder="如 操作员" required>
+        </div>
+        <div>
+          <label style="display:flex;align-items:center;gap:6px">
+            <input type="checkbox" id="selectAllPerms"> 全选权限
+          </label>
+          <div id="permCheckboxes"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="secondary" id="roleModalCancel">取消</button>
           <button type="submit">保存</button>
         </div>
       </form>
