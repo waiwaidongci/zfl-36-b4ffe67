@@ -1,5 +1,5 @@
-import { PERMISSIONS, hasPermission } from "./auth.js";
-import { serializeUser, extractToken, setupUserBar } from "./auth.js";
+import { PERMISSIONS } from "./auth.js";
+import { extractToken, setupUserBar } from "./auth.js";
 
 const API = {
   me: "/api/auth/me",
@@ -56,8 +56,8 @@ function authHeaders() {
 }
 
 function can(perm) {
-  if (!currentUser || !currentUser.role) return false;
-  return hasPermission(currentUser.role, perm);
+  if (!currentUser || !currentUser.permissions) return false;
+  return currentUser.permissions.includes(perm);
 }
 
 function applyPermissions() {

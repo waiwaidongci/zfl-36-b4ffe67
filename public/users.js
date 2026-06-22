@@ -138,9 +138,9 @@ function openAddModal() {
   document.getElementById("userForm").reset();
   document.getElementById("userIdField").style.display = "none";
   document.getElementById("usernameField").style.display = "block";
-  document.getElementById("usernameField input").required = true;
-  document.getElementById("passwordField label").textContent = "密码 *";
-  document.getElementById("passwordField input").required = true;
+  document.querySelector("#usernameField input").required = true;
+  document.querySelector("#passwordField label").textContent = "密码 *";
+  document.querySelector("#passwordField input").required = true;
   document.getElementById("pwdHint").style.display = "block";
   document.getElementById("roleSelectContainer").innerHTML = buildRoleSelect("", cachedRoles);
   document.getElementById("userModal").dataset.mode = "add";
@@ -159,9 +159,9 @@ function openEditModal(id, users) {
   form.password.value = "";
   document.getElementById("userIdField").style.display = "block";
   document.getElementById("usernameField").style.display = "none";
-  document.getElementById("usernameField input").required = false;
-  document.getElementById("passwordField label").textContent = "新密码（留空不修改）";
-  document.getElementById("passwordField input").required = false;
+  document.querySelector("#usernameField input").required = false;
+  document.querySelector("#passwordField label").textContent = "新密码（留空不修改）";
+  document.querySelector("#passwordField input").required = false;
   document.getElementById("pwdHint").style.display = "block";
   document.getElementById("roleSelectContainer").innerHTML = buildRoleSelect(user.role, cachedRoles);
   document.getElementById("userModal").dataset.mode = "edit";
